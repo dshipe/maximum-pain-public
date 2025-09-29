@@ -1,0 +1,28 @@
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-12">
+		
+<table *ngIf="stats" [className]="'table table-striped table-bordered'">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th [className]="'AlignRight'">Active</th>            
+            <th [className]="'AlignRight'">Confirmed</th>
+            <th [className]="'AlignRight'">Unsubscribed</th>
+            <th [className]="'AlignRight'">HoneyPot</th>            
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let x of stats">
+            <td>{{ x.date | date:'short' }}</td>
+            <td [className]="'AlignRight'">{{ x.active }}</td>
+            <td [className]="'AlignRight'">{{ x.confirmed }}</td>
+            <td [className]="'AlignRight'">{{ x.unsubscribed }}</td>
+            <td [className]="'AlignRight'">{{ x.honeyPot }}</td>
+        </tr>
+    </tbody>
+</table>
+
+		</div>
+	</div>
+</div>

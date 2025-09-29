@@ -1,0 +1,38 @@
+<html>
+<head>
+<style>
+body { background-color:#e0e0e0; }
+</style>
+</head>
+
+<body>
+
+
+<ol>
+<li>open developer tools in the browser so you can see the network tab and server responses</li>
+<li>visit the BarChart.com page below</li>
+<li>locate the barchart.com/proxies/core-api/v1/quotes/get?list=stocks.markets.sp500 XHR response</li>
+<li>paste the JSON into the html/TickerPost.html form and submit</li>
+</ol>
+
+<div>This will call the https://maximum-pain.com/api/FinImport/PostTickers API</div>
+<ol>
+<li>parse the tickers from the JSON</li>
+<li>call spStockTickersPost in both AWS and HOME DBs</li>
+<li>The SP will add additional tickers such as SPX, SPXW and QQQ</li>
+</ol>
+
+
+<br/>
+<a target="new" href="https://www.barchart.com/stocks/indices/sp/sp500?page=all">https://www.barchart.com/stocks/indices/sp/sp500?page=all</a>
+
+<br/>
+<br/>
+<form method="post" action="/api/FinImport/PostTickers">
+<textarea name="json" cols="100" rows="20"></textarea>
+<br/>
+<br/>
+<input type="submit"/>
+</form>
+</body>
+</html>

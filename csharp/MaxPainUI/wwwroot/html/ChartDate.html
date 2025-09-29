@@ -1,0 +1,53 @@
+<style>
+#chart_wrap {
+    position: relative;
+    padding-bottom: 100%;
+    height: 0;
+    overflow:hidden;
+}
+
+#piechart {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width:100%;
+    height:500px;
+}
+</style>
+
+<div id="chart_wrap">
+    <div id="mychart"></div>
+</div>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script type="text/javascript">
+  google.charts.load('current', {'packages':['corechart']});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+
+    // Create and populate the data table.
+    var data = new google.visualization.DataTable();
+    data.addColumn('date', 'Date');
+    data.addColumn('number', 'Quantity');
+    data.addRow([new Date(2011, 0, 1), 10])
+    data.addRow([new Date(2011, 1, 1), 15])
+    data.addRow([new Date(2011, 3, 1), 40])
+    data.addRow([new Date(2011, 6, 1), 50])
+
+
+    var options = {
+		title: 'Test',
+		width: 600, height: 400,
+		vAxis: {title: "cr", titleTextStyle: {color: "green"}},
+		hAxis: {title: "time", titleTextStyle: {color: "green"}},
+		lineWidth: 1
+	}
+
+    var chart = new google.visualization.ScatterChart(document.getElementById('mychart'));
+
+    chart.draw(data, options);
+  }
+</script>
+

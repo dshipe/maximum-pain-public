@@ -1,0 +1,151 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">&nbsp;</div>
+  </div>
+  <div class="row">
+    <div class="col-12 col-sm-6 col-md-4">
+      <app-adsense></app-adsense>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="mpShadow rounded border mpPadded">
+
+        <!-- Search form -->
+        <div [formGroup]="tickerForm">
+          <table class="mpInputTable">
+
+            <tr>
+              <td>
+                <div class="input-group input-group-lg">
+                  <input type="text" class="form-control" formControlName="formTicker" (keydown)="onKeydown($event)" />
+                  <div class="input-group-append">
+                    <button class="btn btn-success" type="button" (click)="onSubmit($event)">
+                      <i class="fa fa-check-circle"></i>
+                    </button>
+                  </div>
+                  <div class="input-group-append">
+                    <button class="btn btn-primary" type="button" (click)="onSearch($event)">
+                      <i class="fa fa-search"></i>
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                maturity
+                <select class="form-control" formControlName="formMaturity">
+                  <option *ngFor="let maturity of tickerObj.Maturities" [value]="maturity">{{maturity}}</option>
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                Please help support this website
+                <a rel="nofollow" href="https://www.patreon.com/bePatron?u=47713673">
+                  <button class="btn btn-primary center">Become a Patreon</button>
+                </a>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="mpShadow rounded border mpPadded">
+        <app-subscribe></app-subscribe>
+      </div>
+    </div>
+  </div>
+
+  <ng-template [ngIf]="hasError">
+    <div class="alert alert-warning ErrorMessage" role="alert">
+      <i class="fa-solid fa-warning"></i>&nbsp;&nbsp;
+      No data returned for ticker {{tickerObj.Ticker}}
+    </div>
+  </ng-template>
+
+  <ng-template [ngIf]="!hasError">
+    <div class="row">
+      <div class="col-12">
+        <app-summary inJson="{{mpChain | json}}"></app-summary>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        &nbsp;
+      </div>
+    </div>
+
+    <div [formGroup]="maturityForm" class="mpShadow rounded border mpPadded">
+      <div class="row">
+        <div class="col-12">
+          Select Maturites
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-3" *ngFor="let maturity of maturities; let i = index">
+          <label><input type="checkbox" formControlName="{{ i }}" />&nbsp;{{ maturity }}</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        &nbsp;
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <app-chart apiName="StackedPost" title="Call Open Interest" key="Open Interest" json="{{tickerObjJson}}">
+        </app-chart>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <app-chart apiName="StackedPost" title="Put Open Interest" key="Open Interest" json="{{tickerObjJson}}">
+        </app-chart>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <app-chart apiName="StackedPost" title="Call Volume" key="Volume" json="{{tickerObjJson}}">
+        </app-chart>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <app-chart apiName="StackedPost" title="Put Volume" key="Volume" json="{{tickerObjJson}}">
+        </app-chart>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        &nbsp;
+      </div>
+    </div>
+
+
+    <div class="row">
+      <div class="col-12">
+        <div><span (click)="onClickDebug($event)">.</span></div>
+        <div *ngIf="tickerObj && filtered && filtered[0]" [hidden]="isDebugHidden">
+          <pre style="background-color:#fc0; padding: 5px;">
+  d = {{filtered[0].d}}  
+  m = {{filtered[0].m}}  
+  
+  tickerObj.Maturities
+  {{tickerObj.Maturities | json}}
+  
+  filtered
+  {{filtered | json}}
+              </pre>
+        </div>
+      </div>
+    </div>
+
+  </ng-template>
+</div>

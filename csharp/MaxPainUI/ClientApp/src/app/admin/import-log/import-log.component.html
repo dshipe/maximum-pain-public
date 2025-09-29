@@ -1,0 +1,74 @@
+<div class="container-fluid">
+	<div class="row">
+
+		<div class="col-4">
+			<h3>Date Count</h3>
+			<div class="row BottomBorder">
+				<div class="col-8">Date</div>
+				<div class="col-4">Records</div>
+			</div>
+			<div class="underline" *ngFor="let dte of ImportDateCount">
+				<div class="row">
+					<div class="col-8">
+						{{ dte.CreatedOn | date:'short' }}
+					</div>
+					<div class="col-4">
+						{{ dte.Records | number }}
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-4">
+			<h3>Cache Date Count</h3>
+			<div class="row BottomBorder">
+				<div class="col-8">Date</div>
+				<div class="col-4">Records</div>
+			</div>
+			<div class="underline" *ngFor="let dte of CacheDateCount">
+				<div class="row">
+					<div class="col-8">
+						{{ dte.CreatedOn | date:'short' }}
+					</div>
+					<div class="col-4">
+						{{ dte.Records | number }}
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-4">
+			<h3>Market Calendar</h3>
+			<div class="row BottomBorder">
+				<div class="col-8">Date</div>
+			</div>
+			<div class="underline" *ngFor="let dte of MarketCalendar">
+				<div class="row">
+					<div class="col-8">
+						{{ dte.date | date:'short' }}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<h3>Log</h3>
+	<div class="row BottomBorder">
+		<div class="col-4">Id</div>
+		<div class="col-8">Created On</div>
+	</div>
+	<div id="{{log.id}}" class="underline" *ngFor="let log of ImportLog">
+		<div class="row">
+			<div class="col-4">
+				<a (click)="handleClickHome($event, log);">{{ log.id }}</a>
+			</div>
+			<div class="col-8">
+				{{ log.createdOn | date:'short' }}
+			</div>
+		</div>
+		<div class="col-12" [hidden]="!(log.id==logId)">
+			<pre>{{ log.content }}</pre>
+		</div>
+	</div>
+
+</div>

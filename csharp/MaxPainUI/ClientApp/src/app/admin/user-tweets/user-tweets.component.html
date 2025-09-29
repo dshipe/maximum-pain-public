@@ -1,0 +1,27 @@
+<h1>User Tweets</h1>
+
+
+<div>
+	<table [className]="'table table-striped table-bordered'">
+		<thead>
+		  <tr>
+				<th>UserName</th>            
+				<th>Ticker</th>            
+				<th [className]="'AlignRight'">Mentions</th>            
+				<th [className]="'AlignRight'">Created On</th>
+				<!--<th [className]="'AlignRight'">ID</th>-->
+				<th [className]="'AlignLeft'">Text</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let x of tweets">
+			  <td>{{ x.userName }}</td>
+			  <td>{{ x.ticker }}</td>
+			  <td [className]="'AlignRight'">{{ x.tickerMentions }}</td>
+			  <td [className]="'AlignRight'">{{ x.createdOn | date:'short' }}</td>
+			  <!--<td [className]="'AlignRight'">{{ x.id }}</td>-->
+			  <td>{{ x.text }}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>

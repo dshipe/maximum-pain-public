@@ -1,0 +1,180 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">&nbsp;</div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">&nbsp;</div>
+    </div>
+    <div class="row">
+      <div class="col-12 col-sm-6 col-md-4">
+        <app-adsense></app-adsense>
+      </div>
+      <div class="col-12 col-sm-6 col-md-4">
+        <div class="mpShadow rounded border mpPadded">
+
+          <!-- Search form -->
+          <div [formGroup]="tickerForm">
+            <table class="mpInputTable">
+              <tr>
+                <td>
+                  Daily Scan
+                  <select class="form-control" formControlName="formMaturity">
+                    <option *ngFor="let maturity of this.maturities" [value]="maturity">{{maturity}}</option>
+                  </select>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  &nbsp;
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Please help support this website
+                  <a rel="nofollow" href="https://www.patreon.com/bePatron?u=47713673">
+                    <button class="btn btn-primary center">Become a Patreon</button>
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-md-4">
+        <div class="mpShadow rounded border mpPadded">
+          <app-subscribe></app-subscribe>
+        </div>
+      </div>
+    </div>
+
+    <ng-template [ngIf]="hasError">
+      <div class="alert alert-warning ErrorMessage" role="alert">
+        <i class="fa-solid fa-warning"></i>&nbsp;&nbsp;
+        {{errorMsg}}
+      </div>
+    </ng-template>
+
+    <ng-template [ngIf]="!hasError">
+      <div [formGroup]="filterForm">
+
+        <div>
+          <div class="col-12">
+            <table class="mpInputTable">
+              <tr>
+                <td>
+                  <input type="checkbox" formControlName="formShowProgress" /> Show Progress
+                </td>
+              </tr>
+              <tr *ngIf="showWatch">
+                <td>
+                  Ticker <input formControlName="formAddTicker" /> <button class="btn btn-primary center" (click)="addTicker()">Add</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12">
+            <br />
+            <table>
+              <tbody>
+                <tr>
+                  <td>Created On</td>
+                  <td>&nbsp;</td>
+                  <td><span *ngIf="filteredHistories && filteredHistories[0] && filteredHistories[0].createdOn">{{ filteredHistories[0].createdOn | date:'shortDate' }}</span></td>
+                </tr>
+                <tr>
+                  <td>Date</td>
+                  <td>&nbsp;</td>
+                  <td><span *ngIf="filteredHistories && filteredHistories[0] && filteredHistories[0].date">{{ filteredHistories[0].date | date:'shortDate' }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <table [className]="'table table-striped table-bordered'">
+              <thead>
+                <tr>
+                  <th *ngIf="showWatch">W</th>
+                  <th>Ticker</th>
+                  <th>Source</th>
+                  <th style="text-align:right">Price</th>
+                  <th style="text-align:right">SMA 10</th>
+                  <th style="text-align:right">SMA 20</th>
+                  <th style="text-align:right">Volume</th>
+                  <th style="text-align:right">Volume SMA 20</th>
+                  <th style="text-align:right">RS Rating</th>
+                  <th style="text-align:right">ADR</th>
+                  <th style="text-align:right">BBW</th>
+                  <th style="text-align:right">52 High</th>
+                  <th style="text-align:right">Pro Price</th>
+                  <th style="text-align:right">Pro Perc</th>
+                  <th style="text-align:right">Price Pt</th>
+                  <th style="text-align:right">Volume Pt</th>
+                  <th style="text-align:right">Stop Loss</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td *ngIf="showWatch"><input type="text" class="form-control" formControlName="formWatch" /></td>
+                  <td>&nbsp;</td>
+                  <td><input type="text" class="form-control" formControlName="formSource" /></td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td><input type="text" class="form-control" formControlName="formMinSMAVolume" /></td>
+                  <td><input type="text" class="form-control" formControlName="formRSRating" /></td>
+                  <td><input type="text" class="form-control" formControlName="formADR" /></td>
+                  <td><input type="text" class="form-control" formControlName="formBBW" /></td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td><input type="text" class="form-control" formControlName="formBuyPricePerc" /></td>
+                  <td><input type="text" class="form-control" formControlName="formBuyVolumePerc" /></td>
+                  <td><input type="text" class="form-control" formControlName="formStopLossPerc" /></td>
+                </tr>
+
+                <tr *ngFor="let x of filteredHistories">
+                  <td *ngIf="showWatch"><input type="checkbox" [checked]="x.watchFlag" (click)="updateWatch(x.id)" /></td>
+                  <td>{{ x.ticker }}</td>
+                  <td>{{ x.source }}</td>
+                  <td [className]="'AlignRight'">{{ x.currentPrice | number : '1.2-2' }}</td>
+                  <td [className]="'AlignRight'">{{ x.sma10Day | number : '1.3-3' }}</td>
+                  <td [className]="'AlignRight'">{{ x.sma20Day | number : '1.3-3' }}</td>
+                  <td [className]="'AlignRight'">{{ x.volume | number : '1.0' }}</td>
+                  <td [className]="'AlignRight'">{{ x.volume20 | number : '1.0' }}</td>
+                  <td [className]="'AlignRight'">{{ x.rsRating | number : '1.3-3' }}</td>
+                  <td [className]="'AlignRight'">{{ x.adr | number : '1.3-3' }}</td>
+                  <td [className]="'AlignRight'">{{ x.bbw | number : '1.3-3' }}</td>
+                  <td [className]="'AlignRight'">{{ x.week52High | number : '1.2-2' }}</td>
+                  <td [className]="'AlignRight'">{{ x.progressCurrentPrice | number : '1.2-2' }}</td>
+                  <td [className]="'AlignRight'">{{ (x.progressCurrentPrice - x.currentPrice) / x.currentPrice * 100 | number : '1.2-2' }}</td>
+                  <td [className]="'AlignRight'">{{ x.currentPrice + (x.currentPrice * buyPricePerc) | number : '1.2-2' }}</td>
+                  <td [className]="'AlignRight'">{{ x.volume20 + (x.volume20 * buyVolumePerc) | number : '1.0' }}</td>
+                  <td [className]="'AlignRight'">{{ x.currentPrice + (x.currentPrice * stopLossPerc) | number : '1.2-2' }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+
+        <div class="row" *ngFor="let x of filteredHistories">
+          <div class="col-1">
+            <input *ngIf="showWatch" type="checkbox" class="align-middle" [checked]="x.watchFlag" (click)="updateWatch(x.id)" />
+          </div>
+          <div class="col-11">
+            <img *ngIf="!showProgress" src="data:image/png;base64,{{ x.base64 }}" />
+            <img *ngIf="showProgress" src="data:image/png;base64,{{ x.progressBase64 }}" />
+          </div>
+        </div>
+
+      </div>
+    </ng-template>
+  </div>

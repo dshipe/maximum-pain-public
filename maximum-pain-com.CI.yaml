@@ -1,0 +1,29 @@
+name: maximum-pain.com.CI
+
+on:
+  push:
+    branches: [ master, dev ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101
+    - name: Install dependencies
+      run: dotnet restore 
+    - name: Build
+      run: dotnet build MaxPainAPI.sln --configuration Release --no-restore
+    - name: angular install
+      run: npm install
+        shell: bash
+        working-directory: MaxPainAPI\ClientApp
+    - name: angular build
+      run: npm run build --if-present  
+        shell: bash
+        working-directory: MaxPainAPI\ClientApp

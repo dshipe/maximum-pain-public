@@ -1,0 +1,40 @@
+<div class="container-fluid">
+	<div class="row">
+
+<div class="col-10 offset-1 col-6 col-offset-3">
+  <h2>Contact</h2>
+  <form #f="ngForm" (ngSubmit)="onSubmit()">
+    <div class="row">
+      <div class="col-12 form-group required">
+        <label for="email">E-mail</label>
+        <input type="email" [disabled]="submitted" [(ngModel)]="msg.from" name="msg.from" required=""
+          class="form-control text-input" id="from" placeholder="E-mail" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12 form-group required">
+        <label for="subject">Subject</label>
+        <input type="text" [disabled]="submitted" [(ngModel)]="msg.subject" name="msg.subject" required=""
+          class="form-control text-input" id="subject" placeholder="Subject" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12 form-group required">
+        <label for="message">Message</label>
+        <textarea type="text" [disabled]="submitted" [(ngModel)]="msg.content" name="msg.content" required=""
+          class="form-control" id="content" placeholder="Message..."></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-6">
+        <button type="submit" [disabled]="submitted" class="btn btn-primary">Send</button>
+      </div>
+      <div class="col-6"> 
+        <span style="color: #ff0000; font-weight:bold;">{{ notification }}&nbsp;</span>
+      </div>
+    </div>
+  </form>
+</div>
+
+	</div>
+</div>

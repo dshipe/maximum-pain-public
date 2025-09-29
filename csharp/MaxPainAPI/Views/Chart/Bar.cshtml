@@ -1,0 +1,82 @@
+﻿<head>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(drawCharts);
+
+        function drawCharts() {
+            drawChart1();
+            drawChart2();
+        }
+
+        function drawChart1() {
+            // Define the chart to be drawn.
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Element');
+            data.addColumn('number', 'Percentage');
+            data.addRows([
+                ['Nitrogen', 0.78],
+                ['Oxygen', 0.21],
+                ['Other', 0.01]
+            ]);
+
+            // Instantiate and draw the chart.
+            var chart = new google.visualization.PieChart(document.getElementById('myPieChart'));
+            chart.draw(data, null);
+        }
+
+        function drawChart2() {
+            // Pie Chart with Data Array:
+            var arr = [
+                ['Tax Type', 'Tax Percentage'],
+                ['Income Tax', { v: 35, f: '35%' }],
+                ['Borrowing', { v: 15, f: '15%' }],
+                ['Corp. Tax', { v: 12, f: '12%' }],
+                ['Misc', { v: 8, f: '8%' }]
+            ];
+            var data = google.visualization.arrayToDataTable(arr, false);
+            var option = {
+                title: 'Tax Structure in US',
+                width: 600,
+                height: 500
+            };
+            var chart = new google.visualization.PieChart(document.getElementById('chart1'));
+            chart.draw(data, option);
+
+            // Line Chart:
+            arr = [];
+            arr.push(['x', 'sin(x)', 'cos(x)', 'sin(x)^2']);
+            for (var i = 0; i < 70; i++) {
+                var x = 0.1 * i;
+                arr.push([x, Math.sin(x), Math.cos(x), Math.sin(x) * Math.sin(x)]);
+            }
+            data = google.visualization.arrayToDataTable(arr, false);
+            chart = new google.visualization.LineChart(document.getElementById('chart2'));
+            chart.draw(data, option);
+        }
+    </script>
+</head>
+<body>
+    <!-- Identify where the chart should be drawn. -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h4 style="margin-left:200px">Original</h4>
+                <div id="myPieChart" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <h4 style="margin-left:200px">Simple Pie Chart</h4>
+                <div id="chart1"></div>
+            </div>
+            <div class="col-md-6">
+                <h4 style="margin-left:200px">Line Chart</h4>
+                <div id="chart2"></div>
+            </div>
+        </div>
+    </div>
+</body>

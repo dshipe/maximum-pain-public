@@ -1,0 +1,14 @@
+<div [formGroup]="subscribeForm">
+  <div class="form-group center">
+    <div class="title center">Daily Newsletter</div>
+    <div class="center">Enter your email to get<br/>the free option screener</div>  
+
+    <input type="text" class="form-control required center h" formControlName="formEmail1" placeholder="email"/>
+    <input type="text" class="form-control required center" formControlName="formEmail2" placeholder="email"
+      (keydown)="onKeydown($event)"/>
+    <br/>
+    <button type="button" [disabled]="submitted" (click)="onClick($event)"  class="btn btn-primary center margin">Subscribe</button>
+
+    <div class="notification">{{ notification }}&nbsp;</div>
+  </div>
+</div>

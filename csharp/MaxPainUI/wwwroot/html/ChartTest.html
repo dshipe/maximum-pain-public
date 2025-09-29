@@ -1,0 +1,58 @@
+<style>
+#chart_wrap {
+    position: relative;
+    padding-bottom: 100%;
+    height: 0;
+    overflow:hidden;
+}
+
+#piechart {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width:100%;
+    height:500px;
+}
+</style>
+
+<div id="chart_wrap">
+    <div id="piechart"></div>
+</div>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script type="text/javascript">
+  google.charts.load('current', {'packages':['corechart']});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+
+    var data = google.visualization.arrayToDataTable([
+      ['Language', 'Rating'],
+      ['PHP', 79],
+            ['JavaScript', 71],
+            ['Swift', 68],
+            ['SQL', 56],
+            ['Java', 45],
+            ['Perl', 45],
+            ['Ruby', 35],
+            ['Python', 30],
+            ['AngularJS', 29],
+            ['Node.js', 28],
+            ['Objective-C', 19],
+            ['C#', 17],
+            ['C++', 15],
+            ['C', 14]
+    ]);
+
+    var options = {
+      title: 'Most Popular Programming Languages',
+      width: '100%',
+      height: '500px'
+    };
+
+    var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+
+    chart.draw(data, options);
+  }
+</script>

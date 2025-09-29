@@ -1,0 +1,83 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">&nbsp;</div>
+  </div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">&nbsp;</div>
+    </div>
+    <div class="row">
+      <div class="col-12 col-sm-6 col-md-4">
+        <app-adsense></app-adsense>
+      </div>
+      <div class="col-12 col-sm-6 col-md-4">
+        <div class="mpShadow rounded border mpPadded">
+
+          <!-- Search form -->
+          <div [formGroup]="tickerForm">
+            <table class="mpInputTable">
+              <tr>
+                <td>
+                  Market Direction
+                  <select class="form-control" formControlName="formMaturity">
+                    <option *ngFor="let maturity of this.maturities" [value]="maturity">{{maturity}}</option>
+                  </select>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  &nbsp;
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  Please help support this website
+                  <a rel="nofollow" href="https://www.patreon.com/bePatron?u=47713673">
+                    <button class="btn btn-primary center">Become a Patreon</button>
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-md-4">
+        <div class="mpShadow rounded border mpPadded">
+          <app-subscribe></app-subscribe>
+        </div>
+      </div>
+    </div>
+
+    <ng-template [ngIf]="hasError">
+      <div class="alert alert-warning ErrorMessage" role="alert">
+        <i class="fa-solid fa-warning"></i>&nbsp;&nbsp;
+        {{errorMsg}}
+      </div>
+    </ng-template>
+
+    <ng-template [ngIf]="!hasError">
+      <br /><br />
+
+      <div class="row" *ngFor="let x of directions">
+        <div class="col-12 col-sm-12 col-md-4">
+          <b>Ticker</b> {{ x.ticker }}
+          <br />
+          <b>Created On (UTC)</b> {{ x.createdOn | date:'full' }}
+          <br />
+          <br />
+          <img src="data:image/png;base64,{{ x.base64 }}" />
+        </div>
+
+        <div class="col-12 col-sm-12 col-md-8">
+          <div [className]="'center'">
+            <img src="data:image/png;base64,{{ x.candlestickBase64 }}" />
+          </div>
+        </div>
+      </div>
+
+    </ng-template>
+  </div>

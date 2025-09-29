@@ -1,0 +1,103 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">&nbsp;</div>
+  </div>
+  <div class="row">
+    <div class="col-12 col-sm-6 col-md-4">
+      <app-adsense></app-adsense>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="mpShadow rounded border mpPadded">
+
+        <!-- Search form -->
+        <div [formGroup]="tickerForm">
+          <table>
+            <tr>
+              <td>
+                <div class="input-group input-group-lg">
+                  <input type="text" class="form-control" formControlName="formTicker" (keydown)="onKeydown($event)" />
+                  <div class="input-group-append">
+                    <button class="btn btn-success" type="button" (click)="onSubmit($event)">
+                      <i class="fa fa-check-circle"></i>
+                    </button>
+                  </div>
+                  <div class="input-group-append">
+                    <button class="btn btn-primary" type="button" (click)="onSearch($event)">
+                      <i class="fa fa-search"></i>
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <label>maturity</label>
+                <select class="form-control" formControlName="formMaturity">
+                  <option *ngFor="let maturity of tickerObj.Maturities" [value]="maturity">{{maturity}}</option>
+                </select>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="mpShadow rounded border mpPadded">
+        <app-subscribe></app-subscribe>
+      </div>
+    </div>
+  </div>
+
+  <ng-template [ngIf]="hasError">
+    <div class="alert alert-warning ErrorMessage" role="alert">
+      <i class="fa-solid fa-warning"></i>&nbsp;&nbsp;
+      No data returned for ticker {{tickerObj.Ticker}}
+    </div>
+  </ng-template>
+
+  <ng-template [ngIf]="!hasError">
+
+    <div class="row">
+      <div class="col-12">
+        <app-chart apiName="HistoryMaxpainPost" title="Max Pan History" key="" json="{{tickerObjJson}}">
+        </app-chart>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+
+        <table *ngIf="filtered" [className]="'table table-striped table-bordered'">
+          <caption>
+            <b>{{ filtered[0].tk }} Max Pain History maturity {{ filtered[0].m }}</b>
+          </caption>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th [className]="'AlignRight'">Stock Price</th>
+              <th [className]="'AlignRight'">Max Pain</th>
+              <th [className]="'AlignRight'">High Call</th>
+              <th [className]="'AlignRight'">High Put</th>
+              <th [className]="'AlignRight'">Call Contracts</th>
+              <th [className]="'AlignRight'">Put Contracts</th>
+              <th [className]="'AlignRight'">Total Contracts</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let x of filtered">
+              <td>{{ x.d }}</td>
+              <td [className]="'AlignRight'">{{ x.sp | currency }}</td>
+              <td [className]="'AlignRight'">{{ x.mp | currency }}</td>
+              <td [className]="'AlignRight'">{{ x.coi | currency }}</td>
+              <td [className]="'AlignRight'">{{ x.poi | currency }}</td>
+              <td [className]="'AlignRight'">{{ x.cc }}</td>
+              <td [className]="'AlignRight'">{{ x.pc }}</td>
+              <td [className]="'AlignRight'">{{ x.cc + x.pc}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  </ng-template>
+</div>

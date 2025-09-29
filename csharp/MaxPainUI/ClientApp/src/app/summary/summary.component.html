@@ -1,0 +1,29 @@
+<table *ngIf="chain" [className]="'table table-striped table-bordered'">
+    <thead>
+        <tr>
+            <th>Created</th>
+            <th [className]="'AlignRight'">Stock Price</th>
+            <th [className]="'AlignRight'">Max Pain</th>
+            <th [className]="'AlignRight'">Highest Call OI Strike</th>
+            <th [className]="'AlignRight'">Highest Put OI Strike</th>
+            <th [className]="'AlignRight'">Call OI Amount</th>
+            <th [className]="'AlignRight'">Put OI Amount</th>
+            <th [className]="'AlignRight'">Total OI Amount</th>
+            <th [className]="'AlignRight'">Put Call Ratio</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr>
+            <td [className]="'AlignRight'">{{ chain.createdOn | date : 'M/d/yy h:mm a' }}</td>
+            <td [className]="'AlignRight'">{{ chain.stockPrice | currency }}</td>
+            <td [className]="'AlignRight'">{{ chain.maxPain | currency }}</td>
+            <td [className]="'AlignRight'">{{ chain.highCallOI | currency }}</td>
+            <td [className]="'AlignRight'">{{ chain.highPutOI | currency }}</td>
+            <td [className]="'AlignRight'">{{ chain.totalCallOI | number }}</td>
+            <td [className]="'AlignRight'">{{ chain.totalPutOI | number }}</td>
+            <td [className]="'AlignRight'">{{ chain.totalOI | number }}</td>
+            <td [className]="'AlignRight'">{{ chain.putCallRatio | number : '1.4-4'}}</td>
+        </tr>
+    </tbody>
+</table>

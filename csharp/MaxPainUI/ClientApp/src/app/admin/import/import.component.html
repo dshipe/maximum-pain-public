@@ -1,0 +1,96 @@
+<div class="container-fluid">
+
+    <!-- Search form -->
+    <div [formGroup]="MyForm">
+        <table class="localTable">
+
+            <tr>
+                <td>
+                    <label>Password</label>
+                </td>
+                <td>
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control" formControlName="formPassword" />
+                    </div>
+                </td>
+            </tr>
+
+
+
+
+            <tr>
+                <td colspan="2" class="sectionTitle"><br/>Import</td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Debug</label>
+                </td>
+                <td>
+                    <div class="input-group input-group-lg">
+                        <input type="checkbox" formControlName="formImportDebug" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Send Email</label>
+                </td>
+                <td>
+                    <div class="input-group input-group-lg">
+                        <input type="checkbox" formControlName="formImportSendEmail" />
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" style="text-align:center;">
+                    <button type="button" class="btn btn-primary" (click)="onClickImport($event)">Import</button>
+                </td>
+            </tr>
+
+
+
+
+            <tr>
+                <td colspan="2" class="sectionTitle"><br/>Distribute Email</td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Debug</label>
+                </td>
+                <td>
+                    <div class="input-group input-group-lg">
+                        <input type="checkbox" formControlName="formEmailDebug" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Use Short Urls</label>
+                </td>
+                <td>
+                    <div class="input-group input-group-lg">
+                        <input type="checkbox" formControlName="formEmailUseShortUrls" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Run Now</label>
+                </td>
+                <td>
+                    <div class="input-group input-group-lg">
+                        <input type="checkbox" class="form-control" formControlName="formEmailRunNow" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align:center;">
+                    <button type="button" class="btn btn-primary" (click)="onClickEmail($event)">Send</button>
+                </td>
+            </tr>
+
+        </table>
+    </div>
+
+</div>

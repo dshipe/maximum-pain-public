@@ -1,0 +1,61 @@
+<div class="container-fluid">
+    <div class="row">
+      <div class="col-12">&nbsp;</div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+          <h2>Outside Open Interest (OI) Walls</h2>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <a href="http://localhost:4200/blog/archive/Open-Interest-Walls">What are open interest walls</a>
+        <br/>or the <a href="https://www.youtube.com/watch?v=DFLeYbOvmZI">Open Interest Walls</a> video explanation 
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+
+        <table *ngIf="items" [className]="'table table-striped table-bordered'">
+            <caption>
+            </caption>
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Maturity</th>
+                <th>Is Monthly Exp</th>
+
+                <th [className]="'AlignRight'">Sum OI</th>
+                <th [className]="'AlignRight'">Put OI</th>
+                <th [className]="'AlignRight'">Call OI</th>
+
+                <th [className]="'AlignRight'">Put Strike</th>
+                <th [className]="'AlignRight'">Stock Price</th>
+                <th [className]="'AlignRight'">Call Strike</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let x of items">
+                <tr>
+                  <td>
+                    <a [routerLink]='["/options", x.ticker]' [queryParams]="{m : x.maturity | date:'shortDate', s : x.strike}">{{ x.ticker }}</a>
+                  </td>
+                  <td>{{ x.maturity | date }}</td>
+                  <td>{{ x.isMonthlyExp }}</td>
+
+                  <td [className]="'AlignRight'">{{ x.sumOI }}</td>
+                  <td [className]="'AlignRight'">{{ x.putOI }}</td>
+                  <td [className]="'AlignRight'">{{ x.callOI }}</td>
+
+                  <td [className]="'AlignRight'">{{ x.putStrike | currency}}</td>
+                  <td [className]="'AlignRight'">{{ x.stockPrice | currency}}</td>
+                  <td [className]="'AlignRight'">{{ x.callStrike | currency}}</td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+          
+      </div>
+    </div>
+</div>
+  

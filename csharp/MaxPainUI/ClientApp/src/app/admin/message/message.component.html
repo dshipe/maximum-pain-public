@@ -1,0 +1,39 @@
+<div [hidden]="!isLoading" class="mpCenter">
+	<img src="assets/loadingDot.gif"/>
+</div>
+
+<div class="container-fluid" [hidden]="isLoading">
+
+	<div class="row">
+		<div class="col-10">
+			<h1>Message</h1> Schwab Token Exp: {{ details.machineName | date:'MM/dd/yyyy h:mma'}}
+		</div>
+		<div class="col-2" style="text-align:right">
+			<button type="button" class="btn btn-primary" (click)="onClick($event)">Truncate</button>
+		</div>
+	</div>
+
+	<div class="row BottomBorder">
+	  <div class="col-2">Id</div>
+	  <div class="col-3">UTC</div>
+	  <div class="col-7">Subject</div>
+	</div>
+
+	<div id="{{msg.id}}" class="underline" *ngFor="let msg of messages">
+	  <div class="row">
+		<div class="col-2">
+			<a (click)="handleClick($event, msg);">{{ msg.id }}</a>
+		</div>
+		<div class="col-2">
+			{{ msg.createdOn | date:'short' }}
+		</div>
+		<div class="col-8">
+			{{ msg.subject }}
+		</div>
+	  </div>
+	  <div class="col-12" [hidden]="!(msg.id==messageId)">
+		<pre *ngIf="msg.body.indexOf('<table')==-1">{{ msg.body }}</pre>
+		<div *ngIf="msg.body.indexOf('<table')!=-1" class="MessageHtml" [innerHTML]="msg.body"></div>
+	  </div>
+	</div>
+</div>

@@ -1,0 +1,31 @@
+version: 0.2
+env:
+  variables:
+    DOTNET_ROOT: /root/.dotnet
+  secrets-manager:
+    AWS_ACCESS_KEY_ID_PARAM: CodeBuild:AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY_PARAM: CodeBuild:AWS_SECRET_ACCESS_KEY
+phases:
+  install:
+    runtime-versions:
+      dotnet: 6.0
+    commands:
+      - curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel STS   
+  pre_build:
+    commands:
+      - echo Restore started on `date`
+      - export PATH="$PATH:/root/.dotnet/tools"
+      - aws configure set profile default
+      - aws configure set region "us-east-1"
+      - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID_PARAM
+      - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY_PARAM
+      - cd csharp
+      - dotnet clean 
+      - dotnet restore
+  build:
+    commands:
+      - echo Build started on `date`
+      - dotnet new -i Amazon.Lambda.Templates::*
+      - dotnet tool install -g Amazon.Lambda.Tools
+      - dotnet tool update -g Amazon.Lambda.Tools
+      - dotnet lambda deploy-function "MaxPainLambda" --function-role "arn:aws:iam::485624753819:role/service-role/MaxPainLambda-role-vu1ij3e6" --region "us-east-1"
