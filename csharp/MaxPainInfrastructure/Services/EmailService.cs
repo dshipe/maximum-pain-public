@@ -1,5 +1,6 @@
 ﻿using MaxPainInfrastructure.Code;
 using MaxPainInfrastructure.Models;
+using Microsoft.Data.SqlClient;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -9,18 +10,21 @@ namespace MaxPainInfrastructure.Services
 {
     public class EmailService : IEmailService
     {
+        private readonly AwsContext _awsContext;
         private readonly ILoggerService _logger;
         private readonly IMailerLiteService _mailerLite;
         private readonly ISecretService _secret;
         private readonly IUrlShortService _urlShort;
 
         public EmailService(
+            AwsContext awsContext,
             ILoggerService loggerService,
             IMailerLiteService mailerLiteService,
             ISecretService secretService,
             IUrlShortService urlShortService
         )
         {
+            _awsContext = awsContext;
             _logger = loggerService;
             _mailerLite = mailerLiteService;
             _secret = secretService;
@@ -96,19 +100,59 @@ namespace MaxPainInfrastructure.Services
             string link = $"https://{lambda}/api/emaillist/confirm?email={HttpUtility.UrlEncode(email)}";
             string body = $"<p>Please confirm your subscription to maximum-pain.com by clicking the following link</p><p style=\"align:center\"><a href=\"{link}\">Confirm my Email Address</a></p>";
             await SendEmail(fromEmail, email, string.Empty, string.Empty, subject, body, string.Empty, true);
+
+            await EmailListUpdate(name, email, EmailStatus.Active);
+
             return true;
         }
 
         public async Task<bool> Confirm(string name, string email)
         {
             await _mailerLite.Subscribe(email, string.Empty);
+            await EmailListUpdate(name, email, EmailStatus.Confirmed);
             return true;
         }
 
         public async Task<bool> Unsubscribe(string name, string email)
         {
             await _mailerLite.Unsubscribe(email);
+            await EmailListUpdate(name, email, EmailStatus.Unsubscribed);
             return true;
+        }
+
+        public async Task<bool> EmailListUpdate(string name, string email, EmailStatus status)
+        {
+            string sql = @"
+                IF NOT EXISTS (
+                    SELECT Id
+                    FROM EmailAccount
+                    WHERE Email = @Email
+                )
+                BEGIN
+                    UPDATE EmailAccount SET EmailStatusID = @StatusId, ModifiedOn = GetUTCDate()
+                    WHERE Email = @Email
+                END
+                ELSE
+                BEGIN
+                    INSERT INTO EmailAccount (Name, Email, EmailStatusId, CreatedOn)
+                    VALUES (@Name, @Email, @StatusId, GetUTCDate())
+                END
+            ";
+
+            List<SqlParameter> parameters = new List<SqlParameter>();
+            parameters.Add(new SqlParameter("StatusId", (System.Int32)status));
+            parameters.Add(new SqlParameter("Email", email));
+            parameters.Add(new SqlParameter("Name", name));
+
+            await _awsContext.Execute(sql, parameters, 30);
+            return true;
+        }
+
+        public string EmaiListUnsubscribeHTML(string message)
+        {
+            string html = Utility.GetEmbeddedFile("Unsubscribe.html");
+            html = html.Replace("<h3></h3>", $"<h3>{message}</h3>");
+            return html;
         }
         #endregion
 

@@ -67,7 +67,7 @@ namespace UnitTestProject1
             FinImportSvc = new FinImportService(_awsContext, _homeContext, LoggerSvc, ConfigurationSvc, CalculationSvc, FinDataSvc, HistorySvc);
 
             MailerLiteSvc = new MailerLiteService(SecretSvc, LoggerSvc);
-            EmailSvc = new EmailService(LoggerSvc, MailerLiteSvc, SecretSvc, UrlShortSvc);
+            EmailSvc = new EmailService(_awsContext, LoggerSvc, MailerLiteSvc, SecretSvc, UrlShortSvc);
 
             SMSSvc = new SMSService(SecretSvc);
             ControllerSvc = new ControllerService(_awsContext, _homeContext, LoggerSvc, CalculationSvc, ChartSvc, ConfigurationSvc, EmailSvc, FinDataSvc, FinImportSvc, HistorySvc, SecretSvc, SMSSvc);

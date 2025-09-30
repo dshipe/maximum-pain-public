@@ -42,12 +42,6 @@ namespace MaxPainInfrastructure.Services
 
         public Task<byte[]> GetEmailImage(string imageTicker);
 
-        #region EmailList
-        public string EmaiListUnsubscribeHTML(string message);
-
-        public Task<bool> EmailListUpdate(string name, string email, EmailStatus status);
-        #endregion
-
         public Task<string> DailyMonitor();
     }
 }

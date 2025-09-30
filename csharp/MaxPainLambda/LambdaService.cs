@@ -71,6 +71,10 @@ namespace MaxPainLambda
             try
             {
                 string? path = request.RequestContext?.Http?.Path?.ToLower();
+                if (!string.IsNullOrEmpty(path) && path.EndsWith("/"))
+                {
+                    path = path.Substring(0, path.Length - 1);
+                }
                 string[] pathArray = path.Split('/');
 
                 if (pathArray.Length < 3 || !string.Equals(pathArray[1], "api"))
@@ -406,7 +410,6 @@ namespace MaxPainLambda
                         string name = FormValue<string>(formData, "name", false, string.Empty);
                         string email = FormValue<string>(formData, "email");
                         await _emailSvc.Subscribe(name, email);
-                        await _controllerSvc.EmailListUpdate(name, email, EmailStatus.Active);
                         responseContent = $"Confirmation sent to {email}";
                     }
                     if (string.Equals(apiMethod, "confirm"))
@@ -416,7 +419,6 @@ namespace MaxPainLambda
                         string name = string.Empty;
                         string email = QueryValue<string>(request, "email");
                         await _emailSvc.Confirm(name, email);
-                        await _controllerSvc.EmailListUpdate(name, email, EmailStatus.Active);
                         responseContent = $"maximum-pain.com:  {email} has been confirmed.";
                     }
                     if (string.Equals(apiMethod, "unsubscribe"))
@@ -426,7 +428,6 @@ namespace MaxPainLambda
                         string name = string.Empty;
                         string email = QueryValue<string>(request, "email");
                         await _emailSvc.Unsubscribe(name, email);
-                        await _controllerSvc.EmailListUpdate(name, email, EmailStatus.Active);
                         responseContent = $"maximum-pain.com:  {email} has been unsubscribed.";
                     }
                 }
