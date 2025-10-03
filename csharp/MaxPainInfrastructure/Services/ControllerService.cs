@@ -53,47 +53,14 @@ namespace MaxPainInfrastructure.Services
             _sms = smsService;
         }
 
-        #region OptionHistory
-        public async Task<OptChn> FetchOptionHistory(string ticker, DateTime maturity, decimal strike, int pastDays, int futureDays)
-        {
-            // fetch OptionQuote using EF and OptionChainJson
-            //await _logger.InfoAsync("ControllerService FetchOptionHistory", "fetch from database");
-            return await _history.GetByTicker(ticker, pastDays, futureDays);
-        }
-        #endregion
-
-        #region MaxPainHistory
-        public async Task<List<MaxPainHistory>?> FetchMaxPainHistory(string ticker, DateTime maturity)
-        {
-            // fetch OptionQuote using EF and OptionChainJson
-            //await _logger.InfoAsync("ControllerService FetchMaxPainHistory", "fetch from database");
-            List<MaxPainHistory>? all = await _homeContext.MaxPainHistoryRead(ticker, maturity);
-
-            // filter by maturity
-            //await _logger.InfoAsync("ControllerService FetchMaxPainHistory", "filter by maturity and strike");
-            if (maturity == DateTime.MinValue)
-            {
-                return all;
-            }
-
-            //return all.Where(x => x.Maturity.ToString("yyMMdd") == maturity.ToString("yyMMdd")).ToList();
-            string maturityStr = maturity.ToString("MM/dd/yyyy");
-            return all.Where(x => x.M == maturityStr).ToList();
-        }
-        #endregion
-
         #region stock
-        public async Task<List<StockTicker>> GetStockTickers()
-        {
-            List<PythonTicker>? python = await _awsContext.GetPythonTicker();
-            string json = DBHelper.Serialize(python);
-            return DBHelper.Deserialize<List<StockTicker>>(json);
-        }
-
         public async Task<List<Stock>> GetStocks()
         {
             List<Stock> stocks = new List<Stock>();
-            List<StockTicker> tickers = await GetStockTickers();
+
+            List<PythonTicker>? python = await _awsContext.GetPythonTicker();
+            string json = DBHelper.Serialize(python);
+            List<StockTicker> tickers = DBHelper.Deserialize<List<StockTicker>>(json);
 
             int step = 50;
             for (int i = 0; i < tickers.Count; i += step)
@@ -118,11 +85,6 @@ namespace MaxPainInfrastructure.Services
         #endregion
 
         #region Scheduled Task
-        public async Task<string> GetScreenerImageTicker()
-        {
-            return await _configuration.Get("ScreenerImageTicker");
-        }
-
         public async Task<List<string>> ScheduledTask(bool debug)
         {
             List<string> result = new List<string>();
@@ -178,50 +140,6 @@ namespace MaxPainInfrastructure.Services
             return result;
         }
 
-        public async Task<string> ExecuteImport(XmlDocument xmlSettings, bool debug, string key, int militaryHour)
-        {
-            DateTime utc = DateTime.UtcNow;
-            DateTime est = Utility.GMTToEST(utc);
-
-            if (est.DayOfWeek == DayOfWeek.Sunday || est.DayOfWeek == DayOfWeek.Saturday)
-            {
-                string response = $"{key} NOT RUN.  The day of the week is Saturday or Sunday";
-                return response;
-            }
-
-            int currentTime = Convert.ToInt32(est.ToString("HHmm"));
-            int oneHour = militaryHour + 100;
-            if (oneHour > 2400) oneHour = oneHour - 2400;
-            if (militaryHour != 0)
-            {
-                if (!(currentTime >= militaryHour && currentTime <= oneHour))
-                {
-                    string response = $"{key} NOT RUN.  The time must be between {militaryHour} and {oneHour} EST";
-                    return response;
-                }
-            }
-
-            DateTime lastRun = Convert.ToDateTime(xmlSettings.SelectSingleNode($"/Settings/{key}").InnerText);
-
-            int currentDay = Convert.ToInt32(utc.ToString("yyyyMMdd"));
-            int lastRunDay = Convert.ToInt32(lastRun.ToString("yyyyMMdd"));
-            if (lastRunDay >= currentDay)
-            {
-                string response = $"{key} NOT RUN.  The last ran date was today";
-                return response;
-            }
-
-            await _configuration.Set(key, utc.ToString("MM/dd/yy HH:mm:ss"));
-
-            await _logger.InfoAsync("ExecuteImport", $"key={key} militaryHour={militaryHour} oneHour={oneHour} est={est}");
-            _finImport.IsDebug = false;
-            _finImport.UseMessage = true;
-            _finImport.UseMostActiveCode = false;
-            await _finImport.RunImport();
-
-            return string.Empty;
-        }
-
         public async Task<string> ScreenerDistribute(bool debug, bool useShortUrls, bool runNow)
         {
             string xml = await _awsContext.SettingsRead();
@@ -232,7 +150,7 @@ namespace MaxPainInfrastructure.Services
             int militaryHour = Convert.ToInt32(Utility.GMTToEST(current).ToString("HHmm"));
             if (Convert.ToBoolean(runNow)) militaryHour = -1;
 
-            string imageTicker = await GetScreenerImageTicker();
+            string imageTicker = await _configuration.Get("ScreenerImageTicker");
             string html = await ExecuteScreener(xmlSettings, imageTicker, Convert.ToBoolean(debug), Convert.ToBoolean(useShortUrls), string.Empty, militaryHour);
             await _awsContext.SettingsPost(xmlSettings.OuterXml);
 
@@ -322,7 +240,6 @@ namespace MaxPainInfrastructure.Services
             ChartInfo info = _chart.LineDouble(sc, "Open Interest", "Open Interest", 200);
             return await _chart.FetchImage(info);
         }
-
 
         public async Task<bool> HealthCheckUnitTest(string xsltFile, XmlDocument xmlSettings, bool debug)
         {
@@ -475,55 +392,6 @@ namespace MaxPainInfrastructure.Services
 
             return estDate.Date;
         }
-
-        #endregion
-
-        #region Zip
-        /*
-        private void CopyTo(Stream src, Stream dest)
-        {
-            byte[] bytes = new byte[4096];
-
-            int cnt;
-
-            while ((cnt = src.Read(bytes, 0, bytes.Length)) != 0)
-            {
-                dest.Write(bytes, 0, cnt);
-            }
-        }
-
-        private byte[] Zip(string str)
-        {
-            var bytes = Encoding.UTF8.GetBytes(str);
-
-            using (var msi = new MemoryStream(bytes))
-            using (var mso = new MemoryStream())
-            {
-                using (var gs = new GZipStream(mso, CompressionMode.Compress))
-                {
-                    //msi.CopyTo(gs);
-                    CopyTo(msi, gs);
-                }
-
-                return mso.ToArray();
-            }
-        }
-
-        private string Unzip(byte[] bytes)
-        {
-            using (var msi = new MemoryStream(bytes))
-            using (var mso = new MemoryStream())
-            {
-                using (var gs = new GZipStream(msi, CompressionMode.Decompress))
-                {
-                    //gs.CopyTo(mso);
-                    CopyTo(gs, mso);
-                }
-
-                return Encoding.UTF8.GetString(mso.ToArray());
-            }
-        }
-        */
         #endregion
 
         public async Task<string> DailyMonitor()
@@ -596,24 +464,10 @@ namespace MaxPainInfrastructure.Services
                 parameters.Add(new SqlParameter("TickerCSV", csv));
                 await _awsContext.Execute(sql, parameters, 30);
 
-                await _sms.SendTextMessage(content);
+                await _sms.SendWhatsapp(content);
             }
 
             return DBHelper.Serialize(dailies);
-        }
-
-        public async Task<bool> OauthExpirationCheck()
-        {
-            var createdOn = await _finData.GetCreatedOn();
-            var expiresOn = createdOn.AddDays(7);
-            var warnOn = createdOn.AddHours(7 * 24 - 6);
-
-            if (DateTime.UtcNow >= warnOn)
-            {
-                //await SendTextMessageAWS($"token expires {expiresOn}");
-            }
-
-            return false;
         }
     }
 

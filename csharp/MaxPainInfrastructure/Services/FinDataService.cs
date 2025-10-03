@@ -379,16 +379,15 @@ END
             };
         }
 
-        public async Task<string> Schwab_Account()
+        public async Task<List<SchwabAccount>> Schwab_Account()
         {
             var token = await Schwab_Init();
             return await _schwab.GetAccounts(token.access_token);
         }
-
         public async Task<string> Schwab_Watchlist()
         {
             var token = await Schwab_Init();
-            return await _schwab.CreateWatchList(token.access_token, "");
+            return await _schwab.CreateWatchlist(token.access_token, "W250930", new string[] { "appl", "orcl" });
         }
         #endregion
 

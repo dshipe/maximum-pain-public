@@ -25,7 +25,7 @@ namespace MaxPainInfrastructure.Services
         public Task<List<ScwOptionCSV>> FetchOptionCSV(string ticker);
         #endregion
 
-        public Task<string> Schwab_Account();
+        public Task<List<SchwabAccount>> Schwab_Account();
 
         public Task<string> Schwab_Watchlist();
     }

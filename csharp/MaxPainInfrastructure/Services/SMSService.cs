@@ -8,6 +8,9 @@ using IO.ClickSend.ClickSend.Api;
 using IO.ClickSend.ClickSend.Model;
 using IO.ClickSend.Client;
 using MaxPainInfrastructure.Code;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
+using Twilio.Types;
 
 namespace MaxPainInfrastructure.Services
 {
@@ -18,6 +21,28 @@ namespace MaxPainInfrastructure.Services
         public SMSService(ISecretService secretService)
         {
             _secretService = secretService;
+        }
+
+        public async Task<string> SendWhatsapp(string content)
+        {
+            return await SendWhatsapp("4043086715", content);
+        }
+
+        public async Task<string> SendWhatsapp(string phone, string content)
+        {
+            string authToken = await _secretService.GetValue("TwilioAuthToken");
+            string accountSid = await _secretService.GetValue("TwilioAccountSid");
+
+            TwilioClient.Init(accountSid, authToken);
+
+            var messageOptions = new CreateMessageOptions(
+              new PhoneNumber($"whatsapp:+1{phone}"));
+
+            messageOptions.From = new PhoneNumber("whatsapp:+14155238886");
+            messageOptions.Body = content;
+
+            var message = MessageResource.Create(messageOptions);
+            return DBHelper.Serialize(message);
         }
 
         public async Task<string> SendTextMessage(string content)

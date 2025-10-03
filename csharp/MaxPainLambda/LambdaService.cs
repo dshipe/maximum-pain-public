@@ -393,7 +393,7 @@ namespace MaxPainLambda
 
                         await _loggerSvc.InfoAsync($"Lambda:EmailList:Screener BEGIN debug={debug} useShortUrls={useShortUrls} runNow={runNow}", string.Empty);
 
-                        string passPhrase = "6#10oz";
+                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
                         if (pw == null || !pw.Equals(passPhrase))
                         {
                             await _loggerSvc.InfoAsync($"Lambda:EmailList:Screener END password is incorrect", string.Empty);
@@ -446,7 +446,7 @@ namespace MaxPainLambda
 
                         await _loggerSvc.InfoAsync($"Lambda:FinImport:RunImport BEGIN debug={debug} utc={utc} sendEmail={sendEmail}", string.Empty);
 
-                        string passPhrase = "6#10oz";
+                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
                         if (string.Compare(pw, passPhrase, false) != 0)
                         {
                             await _loggerSvc.InfoAsync($"Lambda:FinImport:RunImport  END password is incorrect.  passPhrase=\"{passPhrase}\" pw=\"{pw}\"", string.Empty);
@@ -473,7 +473,7 @@ namespace MaxPainLambda
                                 xmlSettings.LoadXml(xml);
 
                                 await _loggerSvc.InfoAsync($"FinImportController.RunImport SEND EMAIL sendEmail={sendEmail} isMarketOpen={_finImportSvc.IsMarketOpen} debug={debug}", string.Empty);
-                                string imageTicker = await _controllerSvc.GetScreenerImageTicker();
+                                string imageTicker = await _configurationSvc.Get("ScreenerImageTicker");
                                 string html = await _controllerSvc.ExecuteScreener(xmlSettings, imageTicker, debug, true, string.Empty, -1);
                                 await _loggerSvc.InfoAsync($"FinImportController.RunImport END", string.Empty);
                             }
@@ -494,7 +494,7 @@ namespace MaxPainLambda
                         xmlSettings.LoadXml(xml);
 
                         await _loggerSvc.InfoAsync($"FinImportController.SendEmail SEND EMAIL", string.Empty);
-                        string imageTicker = await _controllerSvc.GetScreenerImageTicker();
+                        string imageTicker = await _configurationSvc.Get("ScreenerImageTicker");
                         string html = await _controllerSvc.ExecuteScreener(xmlSettings, imageTicker, false, true, string.Empty, -1);
                         await _loggerSvc.InfoAsync($"FinImportController.SendEmail END", string.Empty);
 
@@ -508,7 +508,7 @@ namespace MaxPainLambda
                         string tickersCSV = QueryValue<string>(request, "tickersCSV");
                         string pw = QueryValue<string>(request, "password");
 
-                        string passPhrase = "6#10oz";
+                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
                         if (pw == null || !pw.Equals(passPhrase))
                         {
                             responseContent = $"Lambda:FinImport:importoptions password is incorrect";
@@ -536,7 +536,7 @@ namespace MaxPainLambda
                         bool saveMessage = QueryValue<bool>(request, "saveMessage", false, "true");
                         string pw = QueryValue<string>(request, "password");
 
-                        string passPhrase = "6#10oz";
+                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
                         if (pw == null || !pw.Equals(passPhrase))
                         {
                             responseContent = $"Lambda:FinImport:importstocks password is incorrect";
@@ -597,7 +597,10 @@ namespace MaxPainLambda
                     }
                     if (string.Equals(apiMethod, "stocktickers"))
                     {
-                        responseContent = DBHelper.Serialize(await _controllerSvc.GetStockTickers());
+                        List<PythonTicker>? python = await _awsContext.GetPythonTicker();
+                        string json = DBHelper.Serialize(python);
+                        List<StockTicker> list = DBHelper.Deserialize<List<StockTicker>>(json);
+                        responseContent = DBHelper.Serialize(list);
                     }
                     if (string.Equals(apiMethod, "stocks"))
                     {
@@ -744,7 +747,8 @@ namespace MaxPainLambda
                         int pastDays = QueryValue<int>(request, "pastDays", false, "15");
                         int futureDays = QueryValue<int>(request, "futureDays", false, "7");
 
-                        OptChn? chain = await _controllerSvc.FetchOptionHistory(ticker, DateTime.MinValue, 0, pastDays, futureDays);
+                        OptChn? chain = await _historySvc.GetByTicker(ticker, pastDays, futureDays);
+
                         if (chain == null || chain.Options == null || chain.Options.Count == 0)
                         {
                             return ReturnError(502, $"{controller} {apiMethod} no Option History for {ticker}");
@@ -1054,14 +1058,15 @@ namespace MaxPainLambda
                 {
                     if (string.Equals(apiMethod, "account"))
                     {
-                        responseContent = await _finDataSvc.Schwab_Account();
+                        var result = await _finDataSvc.Schwab_Account();
+                        responseContent = DBHelper.Serialize(result);
                     }
 
                     if (string.Equals(apiMethod, "textmsg"))
                     {
                         string msg = QueryValue<string>(request, "msg");
                         //responseContent = await _controllerSvc.SendMessageToMobileAsync("1", "4043086715", msg);
-                        responseContent = await _smsSvc.SendTextMessage(msg);
+                        responseContent = await _smsSvc.SendWhatsapp(msg);
                     }
                 }
                 #endregion

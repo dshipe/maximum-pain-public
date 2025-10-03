@@ -635,7 +635,7 @@ namespace MaxPainInfrastructure.Services
             return result;
         }
 
-        private async Task<string> PostWithAuth(string accessToken, string url, FormUrlEncodedContent content, string method)
+        private async Task<string> PostWithAuth(string accessToken, string url, ByteArrayContent content, string method)
         {
             string result = string.Empty;
 
@@ -749,12 +749,20 @@ namespace MaxPainInfrastructure.Services
         #endregion
 
         #region Watchlist
-        public async Task<string> GetAccounts(string accessToken)
+        public async Task<SchwabAccount> GetTradingAccount(string accessToken)
+        {
+            List<SchwabAccount> list = await GetAccounts(accessToken);
+            var account = list.FirstOrDefault(a => a.AccountNumber.EndsWith("2788"));
+            if (account == null) account = list.FirstOrDefault(a => a.AccountNumber.EndsWith("9418"));
+            return account;
+        }
+
+        public async Task<List<SchwabAccount>> GetAccounts(string accessToken)
         {
             //string url = $"{_rootUrl}/v1/accounts";
             string url = $"{_rootUrl}/trader/v1/accounts/accountNumbers";
             string json = await GetWithAuth(accessToken, url, "GetAccounts");
-            return json;
+            return DBHelper.Deserialize<List<SchwabAccount>>(json);
         }
 
         public async Task<string> GetAccountInfo(string accessToken)
@@ -783,12 +791,13 @@ namespace MaxPainInfrastructure.Services
 
         public async Task<string> GetWatchList(string accessToken, string accountId)
         {
-            var url = $"{_rootUrl}/accounts/watchlists";
+            var tradingAccount = await GetTradingAccount(accessToken);
+            var url = $"{_rootUrl}/accounts/{tradingAccount.HashValue}/watchlists";
             var json = await GetWithAuth(accessToken, url, "");
             return json;
         }
 
-        public async Task<string> CreateWatchList(string accessToken, string accountId)
+        public async Task<string> CreateWatchListX(string accessToken, string accountId)
         {
             // https://www.reddit.com/r/tdameritrade/comments/nylj0t/how_to_create_a_watchlist_with_python_using_the/
 
@@ -821,6 +830,31 @@ namespace MaxPainInfrastructure.Services
             return json;
 
         }
+
+        public async Task<string> CreateWatchlist(string accessToken, string watchlistName, string[] symbols)
+        {
+            var tradingAccount = await GetTradingAccount(accessToken);
+            var endpoint = $"{_rootUrl}/v1/accounts/{tradingAccount.HashValue}/watchlists";
+
+            // Create the payload for the POST request
+            var list = new List<WatchlistTicker>();
+            foreach (var symbol in symbols)
+            {
+                list.Add(new WatchlistTicker { Symbol = symbol, InstrumentType = "EQUITY" });
+            }
+
+            var payload = new
+            {
+                name = watchlistName,
+                watchlistItems = list.ToArray()
+            };
+
+            var jsonPayload = DBHelper.Serialize(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            var json = await PostWithAuth(accessToken, endpoint, content, "");
+            return json;
+        }
         #endregion
     }
 
@@ -835,5 +869,17 @@ namespace MaxPainInfrastructure.Services
             this.Start = start;
             this.End = end;
         }
+    }
+
+    public class WatchlistTicker
+    {
+        public string Symbol { get; set; }
+        public string InstrumentType { get; set; }
+    }
+
+    public class SchwabAccount
+    {
+        public string AccountNumber { get; set; }
+        public string HashValue { get; set; }
     }
 }

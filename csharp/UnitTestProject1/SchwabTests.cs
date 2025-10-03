@@ -2,7 +2,6 @@
 using MaxPainInfrastructure.Models;
 using MaxPainInfrastructure.Models.Schwab;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -218,22 +217,9 @@ namespace UnitTestProject1
             var json = await ConfigurationSvc.Get("SchwabTokens");
             _token = DBHelper.Deserialize<ScwToken>(json);
 
+            var ws = await SchwabSvc.GetWatchList(_token.access_token, "1");
 
-            //await RefreshToken();
-            var accountJson = await SchwabSvc.GetAccounts(_token.access_token);
-            var jarry = JArray.Parse(accountJson);
-            var account = jarry[0]["hashValue"].ToString();
-
-            // trading account 39772788
-            account = "ECCB7E7DC3E867C9AB7A1849B121297081BA30EB5D830EE477784DB0297D49AF";
-            // dummy   account 48834318
-            //account = "CB4C2D400560A68CE31E16265EF0DDD5060645D559D554D8A68CF95EC4733634";
-
-            var ordersJson = await SchwabSvc.GetOrders(_token.access_token, account, true);
-
-            var watchListJson = await SchwabSvc.GetWatchList(_token.access_token, account);
-
-            var result = await SchwabSvc.CreateWatchList(_token.access_token, account);
+            var result = await SchwabSvc.CreateWatchlist(_token.access_token, "W250930", new string[] { "APP", "ORCL" });
             Assert.AreNotEqual(true, result.Length == 0);
         }
 

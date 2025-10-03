@@ -30,11 +30,13 @@ namespace MaxPainInfrastructure.Services
         public Task<bool> IsMarketOpen(string accessToken, DateTime dte);
         #endregion
 
-        public Task<string> GetAccounts(string accessToken);
+        public Task<SchwabAccount> GetTradingAccount(string accessToken);
+        public Task<List<SchwabAccount>> GetAccounts(string accessToken);
         public Task<string> GetOrders(string accessToken, string accountId, bool allOrders = false);
 
         public Task<string> GetAccountInfo(string accessToken);
         public Task<string> GetWatchList(string accessToken, string accountId);
-        public Task<string> CreateWatchList(string accessToken, string accountId);
+
+        public Task<string> CreateWatchlist(string accessToken, string watchlistName, string[] symbols);
     }
 }

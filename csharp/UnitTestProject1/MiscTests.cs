@@ -250,6 +250,19 @@ namespace UnitTestProject1
             Assert.AreNotEqual(0, result.Length);
         }
 
+        [TestMethod]
+        public async Task SendWhatsapp()
+        {
+            var googleVoice = "4707373225";
+            var cell = "4043086715";
+
+            string msg = "unit test";
+
+            var result = await SMSSvc.SendWhatsapp(cell, msg);
+            OpenInNotepad(result);
+            Assert.AreNotEqual(0, result.Length);
+        }
+
         private string ReadGZip(byte[] buffer)
         {
             using (var stream = new MemoryStream(buffer))
