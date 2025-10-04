@@ -370,7 +370,7 @@ namespace MaxPainLambda
                         string? ticker = QueryValue<string>(request, "ticker", false);
                         if (string.IsNullOrEmpty(ticker)) ticker = "SPX";
 
-                        byte[] buffer = await _controllerSvc.GetEmailImage(ticker);
+                        byte[] buffer = await _emailSvc.GetEmailImage(ticker);
                         return ReturnImage(buffer);
                     }
                 }
@@ -400,7 +400,7 @@ namespace MaxPainLambda
                             return ReturnError(502, "Password is incorrect");
                         }
 
-                        responseContent = await _controllerSvc.ScreenerDistribute(debug, useShortUrls, runNow);
+                        responseContent = await _emailSvc.ScreenerGenerateAndSendOverride(debug, useShortUrls, runNow);
                         await _loggerSvc.InfoAsync($"Lambda:EmailList:Screener END", string.Empty);
                     }
                     if (string.Equals(apiMethod, "subscribe"))
@@ -474,7 +474,7 @@ namespace MaxPainLambda
 
                                 await _loggerSvc.InfoAsync($"FinImportController.RunImport SEND EMAIL sendEmail={sendEmail} isMarketOpen={_finImportSvc.IsMarketOpen} debug={debug}", string.Empty);
                                 string imageTicker = await _configurationSvc.Get("ScreenerImageTicker");
-                                string html = await _controllerSvc.ExecuteScreener(xmlSettings, imageTicker, debug, true, string.Empty, -1);
+                                string html = await _emailSvc.ScreenerGenerateAndSend(xmlSettings, imageTicker, debug, true, string.Empty, -1);
                                 await _loggerSvc.InfoAsync($"FinImportController.RunImport END", string.Empty);
                             }
 
@@ -495,7 +495,7 @@ namespace MaxPainLambda
 
                         await _loggerSvc.InfoAsync($"FinImportController.SendEmail SEND EMAIL", string.Empty);
                         string imageTicker = await _configurationSvc.Get("ScreenerImageTicker");
-                        string html = await _controllerSvc.ExecuteScreener(xmlSettings, imageTicker, false, true, string.Empty, -1);
+                        string html = await _emailSvc.ScreenerGenerateAndSend(xmlSettings, imageTicker, false, true, string.Empty, -1);
                         await _loggerSvc.InfoAsync($"FinImportController.SendEmail END", string.Empty);
 
                         responseContent = html;

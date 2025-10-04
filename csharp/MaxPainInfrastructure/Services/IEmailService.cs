@@ -23,11 +23,15 @@ namespace MaxPainInfrastructure.Services
         #region Daily Screener
         public Task<bool> SendBulkEmail(string subject, string content, bool debugMode);
 
-        public Task<string> Screener(List<MostActive> actives, List<OutsideOIWalls> walls, List<Mx> pains, string xslFileActives, string imageTicker, byte[] buffer, bool debugMode, bool useShortUrls, string message);
+        public Task<string> ScreenerGenerateAndSendOverride(bool debug, bool useShortUrls, bool runNow);
+
+        public Task<string> ScreenerGenerateAndSend(XmlDocument xmlSettings, string imageTicker, bool debug, bool useShortUrls, string message, int militaryHour);
 
         public Task<XmlDocument> GetScreenerXml(List<MostActive> actives, List<OutsideOIWalls> walls, List<Mx> pains, string imageTicker, byte[] buffer);
 
         public Task<string> GetScreenerHtml(XmlDocument xmlDom, string xslContent, bool useShortUrls);
+
+        public Task<byte[]> GetEmailImage(string imageTicker);
         #endregion
     }
 }

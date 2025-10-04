@@ -1,4 +1,5 @@
-﻿using MaxPainInfrastructure.Models;
+﻿using MaxPainInfrastructure.Code;
+using MaxPainInfrastructure.Models;
 using MaxPainInfrastructure.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,7 @@ namespace MaxPainAPI.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly ILoggerService _logger;
         private readonly ICalculationService _calculation;
+        private readonly IConfigurationService _configuration;
         private readonly IControllerService _controller;
         private readonly IFinDataService _finData;
         private readonly IFinImportService _finImport;
@@ -31,6 +33,7 @@ namespace MaxPainAPI.Controllers
             IWebHostEnvironment env,
             ILoggerService loggerService,
             ICalculationService calculationService,
+            IConfigurationService configurationService,
             IControllerService controllerService,
             IFinDataService finDataService,
             IFinImportService finImportService,
@@ -42,6 +45,7 @@ namespace MaxPainAPI.Controllers
             _env = env;
             _logger = loggerService;
             _calculation = calculationService;
+            _configuration = configurationService;
             _controller = controllerService;
             _finImport = finImportService;
             _finData = finDataService;
@@ -81,7 +85,7 @@ namespace MaxPainAPI.Controllers
                     xmlSettings.LoadXml(xml);
 
                     await _logger.InfoAsync($"FinImportController.RunImport SEND EMAIL sendEmail={sendEmail} isMarketOpen={_finImport.IsMarketOpen} debug={debug}", string.Empty);
-                    string imageTicker = await _controller.GetScreenerImageTicker();
+                    string imageTicker = await _configuration.Get("ScreenerImageTicker");
                     string html = await _controller.ExecuteScreener(xmlSettings, imageTicker, debug, true, string.Empty, -1);
                     await _logger.InfoAsync($"FinImportController.RunImport END", string.Empty);
                 }
@@ -106,7 +110,7 @@ namespace MaxPainAPI.Controllers
                 xmlSettings.LoadXml(xml);
 
                 await _logger.InfoAsync($"FinImportController.SendEmail SEND EMAIL", string.Empty);
-                string imageTicker = await _controller.GetScreenerImageTicker();
+                string imageTicker = await _configuration.Get("ScreenerImageTicker");
                 string html = await _controller.ExecuteScreener(xmlSettings, imageTicker, false, true, string.Empty, -1);
                 await _logger.InfoAsync($"FinImportController.SendEmail END", string.Empty);
 
@@ -204,7 +208,9 @@ namespace MaxPainAPI.Controllers
         [HttpGet("StockTickers")]
         public async Task<JsonResult> StockTickers()
         {
-            List<StockTicker> tickers = await _controller.GetStockTickers();
+            List<PythonTicker>? python = await _awsContext.GetPythonTicker();
+            string json = DBHelper.Serialize(python);
+            List<StockTicker> tickers = DBHelper.Deserialize<List<StockTicker>>(json);
             return Json(tickers);
         }
 
