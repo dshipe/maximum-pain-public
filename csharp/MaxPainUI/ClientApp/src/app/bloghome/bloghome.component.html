@@ -1,0 +1,25 @@
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-12">&nbsp;</div>
+	</div>
+
+	<div class="row">
+
+		<div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let x of entries">
+			<div class="mpShadow rounded border MyBox">
+				<a href="/blog/archive/{{ addDashes(x.title) }}/">
+					<div class="MyBoxImageWrapper">
+						<img class="MyBoxImage" src="{{ x.imageUrl }}" />
+					</div>
+				</a>
+				<div class="MyBoxTitle">
+					<a href="/blog/archive/{{ addDashes(x.title) }}/">
+						{{ x.title }}
+					</a>
+				</div>
+				<p>{{ getSummary(x.content) }}</p>
+			</div>
+		</div>
+
+	</div>
+</div>

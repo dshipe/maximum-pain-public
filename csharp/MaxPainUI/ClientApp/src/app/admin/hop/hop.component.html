@@ -1,0 +1,88 @@
+<div [hidden]="!isLoading" class="mpCenter">
+	<img src="assets/loadingDot.gif"/>
+</div>
+
+<div class="container-fluid" [hidden]="isLoading">
+
+  <div class="row">
+    <div class="col-6"><h1>Hop Summary</h1></div>
+    <div class="col-6" style="text-align:right">
+      <!--<button type="button" class="btn btn-primary" (click)="onClick($event)">Truncate</button>-->
+    </div>
+  </div>
+
+  <div class="row BottomBorder">
+    <div class="col-3">UTC</div>
+    <div class="col-2">Hops</div>
+    <div class="col-7">Destination</div>
+  </div>
+
+  <div class="underline" *ngFor="let summary of summaries">
+    <div class="row">
+      <div class="col-3">
+        {{ summary.createdOn | date:'short' }}
+      </div>
+      <div class="col-2">
+        {{ summary.hops }}
+      </div>
+      <div class="col-7">
+        {{ summary.destination }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-6"><h1>Hop Agents</h1></div>
+    <div class="col-6" style="text-align:right">
+      <!--<button type="button" class="btn btn-primary" (click)="onClick($event)">Truncate</button>-->
+    </div>
+  </div>
+
+  <div class="row BottomBorder">
+    <div class="col-2">Hops</div>
+    <div class="col-10">UserAgent</div>
+  </div>
+
+  <div class="underline" *ngFor="let agent of agents">
+    <div class="row">
+      <div class="col-2">
+        {{ agent.hops }}
+      </div>
+      <div class="col-10">
+        {{ agent.userAgent }}
+      </div>
+    </div>
+  </div>
+
+
+  <div class="row">
+    <div class="col-6"><h1>Hops</h1></div>
+    <div class="col-6" style="text-align:right">
+      <!--<button type="button" class="btn btn-primary" (click)="onClick($event)">Truncate</button>-->
+    </div>
+  </div>
+
+  <div class="row BottomBorder">
+    <div class="col-1">Id</div>
+    <div class="col-2">UTC</div>
+    <div class="col-4">Destination</div>
+    <div class="col-5">Referrer</div>
+  </div>
+
+  <div class="underline" *ngFor="let hop of hops">
+    <div class="row">
+      <div class="col-1">
+        {{ hop.id }}
+      </div>
+      <div class="col-2">
+        {{ hop.createdOn | date:'short' }}
+      </div>
+      <div class="col-4">
+        {{ hop.destination }}
+      </div>
+      <div class="col-5">
+        {{ hop.referrer }}
+      </div>
+    </div>
+  </div>
+</div>

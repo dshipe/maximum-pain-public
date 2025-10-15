@@ -1,0 +1,94 @@
+<!--
+source:
+https://stackblitz.com/edit/angular-simple-bootstrap-navbar?file=src%2Fapp%2Fapp.component.html
+-->
+<!-- Sidebar  -->
+<nav id="sidebar"  [ngClass]="is_active ? 'fixed-top active' : 'fixed-top'">
+  <ul class="list-unstyled components">
+
+    <li>
+      <a [routerLink]='["/options"]'>
+        <i class="fas fa-house" title="Options"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Options</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/stacked"]'>
+        <i class="fas fa-chart-simple" title="Stacked"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Stacked</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/greeks"]'>
+        <i class="fas fa-landmark-dome" title="Greeks"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Greeks</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/iv"]'>
+        <i class="fas fa-chart-line" title="Implied Vol."></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Implied Vol.</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/history"]'>
+        <i class="fas fa-history" title="History"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">History</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/download-csv"]'>
+        <i class="fas fa-download" title="Download"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Download</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/market-direction"]'>
+        <i class="fas fa-traffic-light" title="Market Direction"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Market Direction</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/daily-scan"]'>
+        <i class="fas fa-barcode" title="Daily Scan"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Daily Scan</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/cup-with-handle"]'>
+        <i class="fas fa-mug-saucer" title="Cup w/ Handl"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Cup w/ Handle</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/blog"]'>
+        <i class="fas fa-blog" title="Blog"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Blog</span>
+      </a>
+    </li>
+
+    <li>
+      <a [routerLink]='["/contact"]'>
+        <i class="fa-regular fa-envelope" title="Contact"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">Contact</span>
+      </a>
+    </li>
+
+    <li class="align-bottom">
+      <a (click)="toggleTheme()" style="color: #ccc">
+        <i [ngClass]="theme=='bootstrap' ? 'fas fa-moon' : 'fas fa-sun'"></i>
+        <span [ngClass]="is_active ? 'sidebar-hidden' : ''">{{ theme=='bootstrap' ? 'dark' : 'light' }} mode</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+

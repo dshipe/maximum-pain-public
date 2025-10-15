@@ -1,0 +1,81 @@
+<html>
+<head>
+<style>
+body { background-color:#e0e0e0; }
+</style>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+<script type="text/javascript">
+String.prototype.replaceAll = function(s1, s2) {
+    return this.replace(
+        new RegExp(  s1.replace(/[.^$*+?()[{\|]/g, '\\$&'),  'g'  ),
+        s2
+    );
+};
+
+function ReplaceAll(content, src, repl) {
+    return content.replace(
+        new RegExp(  src.replace(/[.^$*+?()[{\|]/g, '\\$&'),  'g'  ),
+        repl
+    );
+};
+
+var entityMap = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+  '/': '&#x2F;',
+  '`': '&#x60;',
+  '=': '&#x3D;'
+};
+
+function escapeHtml (string) {
+  return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+    return entityMap[s];
+  });
+}
+
+// shorthand document ready
+$(function() {
+    console.log( "ready!" );
+
+	$('#process').click(function(){
+		console.log("process");
+
+		var content = $('#encode').val();
+		//var result = $('#helper').text(content).html();
+		var result = escapeHtml(content);
+		$('#encode').val(result);
+	});
+	
+});
+</script>
+</head>
+
+<body>
+<h3>Blog Post</h3>
+<form method="post" action="https://maximum-pain.com/api/blog/saveXml">
+xml
+<br/>
+<textarea name="xml" rows="10" cols="100">
+
+</textarea>
+<br/><br/>
+<input type="submit"/>
+</form>
+
+<h3>Encode</h3>
+<textarea name="encode" id="encode" rows="10" cols="100">
+
+</textarea>
+<br/><br/>
+<input type="button" id="process" value="process"/>
+
+
+<div id="helper" style="height:1px;"></div>
+
+</body>
+</html>
+
+

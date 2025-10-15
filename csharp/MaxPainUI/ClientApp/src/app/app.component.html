@@ -1,0 +1,30 @@
+<!-- Top Nav -->
+<nav class="navbar navbar-expand-md navbar-dark fixed-top" style="background: #303030; justify-content:flex-start">
+  <div style="padding: 5px">
+    <button class="btn" (click)="toggleSidebar()">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+  &nbsp;
+  <a class='navbar-brand' [routerLink]='["/"]'>Maximum-Pain.com</a>
+</nav>
+
+<div class="wrapper">
+
+  <!-- Sidebar  -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Page Content  -->
+  <div id="content">
+
+    <!-- Page Content -->
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col body-content">
+          <router-outlet></router-outlet>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

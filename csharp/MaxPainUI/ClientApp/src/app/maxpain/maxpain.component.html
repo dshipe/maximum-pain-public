@@ -1,0 +1,40 @@
+
+	<h2>Max Pain</h2>
+	<table *ngIf="chain" [className]="'table table-striped table-bordered'">
+		<caption>
+			<b>{{ chain.stock }} maturity {{ chain.maturity | date : 'M/d/yy'}}</b>
+			&nbsp;created {{ chain.createdOn | date : 'M/d/yy h:mm a'}}
+			&nbsp;<b>Max Pain {{ chain.maxPain | currency }}</b> 
+		</caption>
+		<thead>
+			<tr>
+				<th [className]="'AlignCenter'" colspan="2">Call</th>
+				<th [className]="'AlignRight'">Strike</th>
+				<th [className]="'AlignCenter'" colspan="2">Put</th>
+				<th [className]="'AlignRight'">Total</th>
+				<th [className]="'AlignRight'">Difference</th> 
+			</tr>
+			<tr>
+				<th [className]="'AlignRight'">OI</th>
+				<th [className]="'AlignRight'">Cash</th>            
+				<th>&nbsp;</th>
+				<th [className]="'AlignRight'">OI</th>
+				<th [className]="'AlignRight'">Cash</th>            
+				<th colspan="2">&nbsp;</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let x of chain.items">
+				<td [className]="'AlignRight'">{{ x.coi }}</td>
+				<td [className]="'AlignRight'">{{ x.cch | currency }}</td>
+
+				<td [className]="'AlignRight'"><span style="font-weight:bold;">{{ x.s | currency }}</span></td>
+
+				<td [className]="'AlignRight'">{{ x.poi }}</td>
+				<td [className]="'AlignRight'">{{ x.pch | currency }}</td>
+
+				<td [className]="'AlignRight'">{{ x.totalCash | currency }}</td>
+				<td [className]="'AlignRight'">{{ x.pd | number }} %</td>
+			</tr>
+		</tbody>
+	</table>

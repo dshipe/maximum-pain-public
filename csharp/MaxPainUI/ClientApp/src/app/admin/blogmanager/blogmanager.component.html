@@ -1,0 +1,125 @@
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-12">
+            <button type="button" class="btn btn-primary" (click)="onNewEntry($event)">New Entry</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <table [className]="'table table-striped table-bordered'">
+                <caption>Blog Entries</caption>
+                <thead>
+                  <tr>
+                    <th>Id</th>
+                    <th>Title</th>
+                    <th>Image Url</th>
+                    <th>Ordinal</th>
+                    <th>Is Active</th>
+                    <th>Is Stock Pick</th>
+                    <th>Show On Home</th>
+                    <th>Created On</th>
+                    <th>Modified On</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let x of entries" (click)="onRowClick($event, x)">
+                    <td [className]="'AlignRight'">{{ x.id | number }}</td>
+                    <td>{{ x.title }}</td>
+                    <td>{{ x.imageUrl }}</td>
+                    <td>{{ x.ordinal }}</td>
+                    <td>{{ x.isActive }}</td>
+                    <td>{{ x.isStockPick }}</td>
+                    <td>{{ x.showOnHome }}</td>
+                    <td>{{ x.createdOn | date : 'M/d/yy h:mm a'}}</td>
+                    <td>{{ x.modifiedOn | date : 'M/d/yy h:mm a'}}</td>
+                  </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+
+<div [hidden]="!showModal" class="modal-background">&nbsp;</div>
+<div [hidden]="!showModal" class="modal-window">
+    <div class="modal-close">
+        <button type="button" class="btn btn-primary" (click)="onModalClose($event)">x</button>
+    </div>
+    <div [formGroup]="blogForm">
+      <table class="mpInputTable">
+        <tr>
+          <td><label>Id</label></td>
+          <td>
+            <div class="input-group input-group">
+              <input type="text" class="form-control" formControlName="id" readonly />
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><label>Title</label></td>
+          <td>
+            <div class="input-group input-group">
+              <input type="text" class="form-control" formControlName="title" />
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><label>Image Url</label></td>
+          <td>
+            <div class="input-group input-group">
+              <input type="text" class="form-control" formControlName="imageUrl" />
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><label>Ordinal</label></td>
+          <td>
+            <div class="input-group input-group">
+              <input type="text" class="form-control" formControlName="ordinal" />
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><label>Is Active</label></td>
+          <td>
+            <div class="input-group input-group">
+              <input type="checkbox" class="form-control" formControlName="isActive" />
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><label>Is Stock Pick</label></td>
+          <td>
+            <div class="input-group input-group">
+              <input type="checkbox" class="form-control" formControlName="isStockPick" />
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><label>Show On Home</label></td>
+          <td>
+            <div class="input-group input-group">
+              <input type="checkbox" class="form-control" formControlName="showOnHome" />
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><label>Content</label></td>
+          <td>
+            <div class="input-group input-group">
+              <textarea class="form-control" formControlName="content" rows="5">
+                            </textarea>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <button type="button" class="btn btn-primary mpCenter" (click)="onModalSave($event)">Save</button>
+          </td>
+        </tr>
+
+      </table>
+    </div>
+</div>

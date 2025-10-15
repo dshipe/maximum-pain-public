@@ -1,0 +1,70 @@
+<table *ngIf="mostActives" [className]="'table table-striped table-bordered'">
+  <caption>
+    <span *ngIf="nextMaturity=='true'">expiring soon</span>
+    <span *ngIf="nextMaturity=='false'">any expiration</span>
+  </caption>
+  <thead>
+    <tr>
+      <th>Ticker</th>
+      <th>Maturity</th>
+      <th>Date</th>
+      <th>Type</th>
+      <th [className]="'AlignRight'">Strike</th>
+      <ng-container *ngIf='screenerType=="ChangePrice"'>
+        <th [className]="'AlignRight'">Price</th>
+        <th [className]="'AlignRight'">Prev. Price</th>
+        <th [className]="'AlignRight'">Change</th>
+      </ng-container>
+      <ng-container *ngIf='screenerType=="OpenInterest" || screenerType=="ChangeOpenInterest"'>
+        <th [className]="'AlignRight'">Open Int.</th>
+        <th [className]="'AlignRight'">Prev. Open Int.</th>
+        <th [className]="'AlignRight'">Change</th>
+        <th [className]="'AlignRight'">Price</th>
+        <th [className]="'AlignRight'">Prev. Price</th>
+      </ng-container>
+      <ng-container *ngIf='screenerType=="Volume" || screenerType=="ChangeVolume"'>
+        <th [className]="'AlignRight'">Volume</th>
+        <th [className]="'AlignRight'">Prev. Volume</th>
+        <th [className]="'AlignRight'">Change</th>
+        <th [className]="'AlignRight'">Price</th>
+        <th [className]="'AlignRight'">Prev. Price</th>
+      </ng-container>
+    </tr>
+  </thead>
+  <tbody>
+    <ng-container *ngFor="let x of mostActives">
+      <tr>
+        <td>
+          <a [routerLink]='["/history", x.ticker]' [queryParams]="{m : x.maturity | date:'shortDate', s : x.strike}">{{ x.ticker }}</a>
+        </td>
+        <td>{{ x.maturity | date }}</td>
+        <td>{{ x.createdOn | date }}</td>
+        <td>
+          <span *ngIf="x.callPut=='C'">Call</span>
+          <span *ngIf="x.callPut=='P'">Put</span>
+        </td>
+        <td [className]="'AlignRight'">{{ x.strike | currency}}</td>
+        <ng-container *ngIf='screenerType=="ChangePrice"'>
+          <td [className]="'AlignRight'">{{ x.price | currency}}</td>
+          <td [className]="'AlignRight'">{{ x.prevPrice | currency}}</td>
+          <td [className]="'AlignRight'">{{ ((x.price - x.prevPrice) / x.prevPrice) * 100.0 | number:'1.2-2' }} %</td>
+        </ng-container>
+        <ng-container *ngIf='screenerType=="OpenInterest" || screenerType=="ChangeOpenInterest"'>
+          <td [className]="'AlignRight'">{{ x.openInterest | number}}</td>
+          <td [className]="'AlignRight'">{{ x.prevOpenInterest | number}}</td>
+          <td [className]="'AlignRight'">{{ ((x.openInterest - x.prevOpenInterest) / x.prevOpenInterest) * 100.0 | number:'1.2-2' }} %</td>
+          <td [className]="'AlignRight'">{{ x.price | currency}}</td>
+          <td [className]="'AlignRight'">{{ x.prevPrice | currency}}</td>
+        </ng-container>
+        <ng-container *ngIf='screenerType=="Volume" || screenerType=="ChangeVolume"'>
+          <td [className]="'AlignRight'">{{ x.volume | number}}</td>
+          <td [className]="'AlignRight'">{{ x.prevVolume | number}}</td>
+          <td [className]="'AlignRight'">{{ ((x.volume - x.prevVolume) / x.prevVolume) * 100.0 | number:'1.2-2' }} %</td>
+          <td [className]="'AlignRight'">{{ x.price | currency}}</td>
+          <td [className]="'AlignRight'">{{ x.prevPrice | currency}}</td>
+        </ng-container>
+      </tr>
+    </ng-container>
+  </tbody>
+</table>
+

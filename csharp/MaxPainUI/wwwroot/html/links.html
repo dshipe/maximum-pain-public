@@ -1,0 +1,179 @@
+<html>
+
+<head>
+    <!--<base href="https://maximum-pain.com">-->
+    <link rel="stylesheet" type="text/css"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" />
+
+    <style type="text/css">
+        body {
+            background-color: #e0e0e0;
+        }
+
+        .block {
+            margin: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+
+        .link {
+        }
+    </style>
+
+    <script language="JavaScript">
+        function openLink(path) {
+            var url = "https://hcapr4ndhwksq5dq7ird3yujpq0edbbt.lambda-url.us-east-1.on.aws" + path;
+            window.open(url, "_blank");
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-4">
+				<a href="javascript:main();">generate</a>
+			</div>
+            <div class="col-xs-4">
+				<input type="text" id="txtEncoded"/>
+			</div>
+            <div class="col-xs-4">
+				<input type="text" id="txtDecoded"/>
+			</div>
+        </div>
+		
+        <div class="row">
+
+            <div class="col-xs-12 col-md-6">
+                <div class="block">
+                    Admin pages
+                    <div class="link"><a target="_new" href="/admin/message">/admin/message</a></div>
+                    <div class="link"><a target="_new" href="/admin/email-stat">/admin/email-stat</a></div>
+                    <div class="link"><a target="_new" href="/admin/usertweets?userNames=super_trades">/admin/usertweets?userNames=super_trades</a></div>
+                    <div class="link"><a target="_new" href="/admin/usertweets?userNames=michaeljburry">/admin/usertweets?userNames=michaeljburry</a></div>
+                    <div class="link"><a target="_new" href="/admin/usertweets?userNames=traderstewie">/admin/usertweets?userNames=traderstewie</a></div>
+                    <div class="link"><a target="_new" href="/admin/usertweets?userNames=cfromhertz">/admin/usertweets?userNames=cfromhertz</a></div>
+                    <div class="link"><a target="_new" href="/admin/hop">/admin/hop</a></div>
+                    <div class="link"><a target="_new" href="/admin/import-log">/admin/import-log</a></div>
+                </div>
+            </div>
+
+            <div class="col-xs-12 col-md-6">
+                <div class="block">
+                    Option Data
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/options/straddle/AAPL');return false;">/api/options/straddle/AAPL</a>
+                    </div>
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/options/raw/AAPL');return false;">/api/options/raw/AAPL</a>
+                    </div>
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/options/TDA/AAPL');return false;">/api/options/TDA/AAPL</a>
+                    </div>
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/options/tdacsv/AAPL');return false;">/api/options/tdacsv/AAPL</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12 col-md-6">
+                <div class="block">
+                    Screener
+                    <div class="link"><a target="_new"
+                            href="/screener/changeprice">/screener/changeprice</a></div>
+                    <div class="link"><a target="_new"
+                            href="/screener/openinterest">/screener/openinterest</a></div>
+                    <div class="link"><a target="_new"
+                            href="/screener/changeopeninterest">/screener/changeopeninterest</a>
+                    </div>
+                    <div class="link"><a target="_new"
+                            href="/outside-oi-walls">/outside-oi-walls</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12 col-md-6">
+                <div class="block">
+                    Other Data
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/remotedata/mostactive');return false;">/api/remotedata/mostactive</a>
+                    </div>
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/remotedata/outsideoiwalls');return false;">/api/remotedata/outsideoiwalls</a>
+                    </div>
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/history/options/AAPL');return false;">/api/history/options/AAPL</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12 col-md-6">
+                <div class="block">
+                    Images
+                    <div class="link"><a target="_new"
+                            href="https://maximum-pain.com:83/image/openinterest/AAPL">https://maximum-pain.com:83/image/openinterest/AAPL</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12 col-md-6">
+                <div class="block">
+                    Settings
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/twitter/getConfig');return false;">/api/twitter/getConfig</a>
+                    </div>
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/settings/readXml');return false;">/api/settings/readXml</a>
+                    </div>
+                    <div class="link">
+                        <a href="#" onclick="OpenLink('/api/settings/set?key=UseTDA&value=true');return false;">/api/settings/set?key=UseTDA&value=true</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12 col-md-6">
+                <div class="block">
+                    Import
+                    <div class="link"><a target="_new" href="/admin/import">/admin/import</a>
+                    </div>
+                    Screener
+                   <div class="link"><a target="_new"
+                    href="/html/screener.html">/html/screener.html</a>
+                    </div>
+                   <div class="link"><a target="_new"
+                    href="/html/screener.png">/html/screener.png</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12 col-md-6">
+                <div class="block">
+                    tokens
+                    <div class="link"><a target="_new" href="/html/TDAPost.html">/html/TDAPost.html</a></div>
+                    Ticker Post
+                    <div class="link"><a target="_new" href="/html/TickerPost.html">/html/TickerPost.html</a></div>
+                    Daily Scan
+                    <div class="link"><a target="_new" href="/daily-scan">/daily-scan</a></div>
+                    Market Direction
+                    <div class="link"><a target="_new" href="/market-direction">/market-direction</a></div>
+                </div>
+            </div>
+			
+`            <div class="col-xs-12 col-md-6">
+                 <div class="block">
+                     Email list
+                     <div class="link">
+                         <a href="#" onclick="OpenLink('/api/emailList/Subscribe?email=dan.shipe@yahoo.com');return false;">/api/emailList/Subscribe?email=dan.shipe@yahoo.com</a>
+                     </div>
+                     <div class="link">
+                         <a href="#" onclick="OpenLink('/api/emailList/Confirm?email=dan.shipe@yahoo.com');return false;">/api/emailList/Confirm?email=dan.shipe@yahoo.com</a>
+                     </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

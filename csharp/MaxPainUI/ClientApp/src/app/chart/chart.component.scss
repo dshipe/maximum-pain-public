@@ -1,0 +1,28 @@
+.NoMargin {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.ChartWrapper {
+  text-align: center;
+}
+
+.ChartContainer {
+}
+
+.ImageWrapper {
+    position: absolute;
+    z-index: 99;
+    width: 100%;
+    height: 100%;
+    /*background-color: #fff;*/
+}
+.ImageWrapper img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.debug {
+    background-color: #fc0;
+}

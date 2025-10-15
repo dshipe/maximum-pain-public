@@ -1,0 +1,59 @@
+﻿{
+  "ChartType": "line",
+  "DataType": "date",
+  "Title": "GE Price History maturity=05/29/2020 strike=0.5 EST http://maximum-pain.com",
+  "HAxisTitle": "Date",
+  "HAxisFormat": "MM/dd/yy",
+  "VAxisTitle": "Price",
+  "VAxisFormat": "#,##0",
+  "Width": 1200,
+  "Height": 600,
+  "Interval": 1,
+  "Enable3D": false,
+  "Series": [
+    {
+      "Title": "Call",
+      "Color": "#009900",
+      "Points": [
+        {
+          "X": "1590379200",
+          "Y": "1"
+        },
+        {
+          "X": "1590465600",
+          "Y": "2"
+        },
+        {
+          "X": "1590552000",
+          "Y": "3"
+        }
+      ]
+    },
+    {
+      "Title": "Put",
+      "Color": "#ff0000",
+      "Points": [
+        {
+          "X": "1590379200",
+          "Y": "1"
+        },
+        {
+          "X": "1590465600",
+          "Y": "2"
+        },
+        {
+          "X": "1590552000",
+          "Y": "3"
+        }
+      ]
+    }
+  ],
+  "DataArray": [
+    [ "Date", "Call", "Put" ],
+    [ 1590379200.0, 0.0, 0.0 ],
+    [ 1590465600.0, 0.0, 0.0 ],
+    [ 1590552000.0, 0.0, 0.0 ],
+    [ 1590638400.0, 0.0, 0.0 ],
+    [ 1590724800.0, 0.0, 0.0 ]
+  ]
+}

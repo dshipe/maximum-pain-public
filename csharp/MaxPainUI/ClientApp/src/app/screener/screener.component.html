@@ -1,0 +1,29 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">&nbsp;</div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+        <h2 *ngIf='screenerType=="ChangePrice"'>Change in Price Screener</h2>
+        <h2 *ngIf='screenerType=="OpenInterest"'>Open Interest Screener</h2>
+        <h2 *ngIf='screenerType=="ChangeOpenInterest"'>Change in Open Interest Screener</h2>
+        <h2 *ngIf='screenerType=="Volume"'>Volume Screener</h2>
+        <h2 *ngIf='screenerType=="ChangeVolume"'>Change in Volume Screener</h2>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+        <app-screener-child inJson="{{filteredJson}}" screenerType="{{screenerType}}" nextMaturity="true"></app-screener-child>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+        &nbsp;
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+        <app-screener-child inJson="{{filteredAnyJson}}" screenerType="{{screenerType}}" nextMaturity="false"></app-screener-child>
+    </div>
+  </div>
+</div>

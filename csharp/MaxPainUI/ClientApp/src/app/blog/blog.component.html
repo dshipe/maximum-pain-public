@@ -1,0 +1,29 @@
+<div *ngIf="entry">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <h2>{{entry.title}}</h2>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <div [innerHTML]="entry.content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="!entry">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <h2>{{description}}</h2>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <div [innerHTML]="content"></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,131 @@
+<div *ngIf="isEmpty" class="MessageWrapper">
+	<span class="Message">
+		The stock ticker is invalid or no data returned
+	</span>
+</div>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12">&nbsp;</div>
+  </div>
+  <div class="row">
+    <div class="col-12 col-sm-6 col-md-4">
+        <app-adsense></app-adsense>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+		<div class="mpShadow rounded border">
+		    <div>&nbsp;</div>
+	
+      <!-- Search form -->
+      <form class="form-inline">
+        <table>
+          <tr>
+            <td>
+				<div class="input-group input-group-lg">
+				  <input type="text" #tickersearch class="form-control" placeholder="{{ tickerObj.Ticker | uppercase }}" name="search" (keydown)="onKeydown($event)" >
+				  <div class="input-group-append">
+				  <button class="btn btn-primary" type="button" (click)="changeTicker($event)"><i class="fa fa-search"></i></button>
+				  </div>
+				</div>		
+            </td>
+          </tr> 
+          <tr>
+            <td>
+              <label>maturity</label>
+              <select class="form-control" (change)="changeMaturity($event.target.value)">
+                <option *ngFor="let maturity of maturities" 
+                  [selected]="tickerObj.MaturityString==maturity"
+                  value={{maturity}}>{{maturity}}</option>
+              </select>
+            </td>
+          </tr> 
+        </table>
+      </form>
+	  
+			<div>&nbsp;</div>
+		</div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+		<div class="mpShadow rounded border">
+			<app-subscribe ></app-subscribe>
+		</div>	
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-12">
+	
+<div *ngIf="!isEmpty">
+	<table *ngIf="calls" [className]="'table table-striped table-bordered'">
+		<caption>
+			<b>{{ calls[0].ticker }} Call Spreads maturity {{ calls[0].maturity | date : 'M/d/yy' }} Date {{ calls[0].modifiedOn | date : 'M/d/yy h:mm a'}}</b>
+		</caption>
+		<thead>
+		  <tr>
+				<th [className]="'AlignRight'">Long Strike</th>            
+				<th [className]="'AlignRight'">Long Price</th>            
+				<th [className]="'AlignRight'">Short Strike</th>
+				<th [className]="'AlignRight'">Short Price</th>
+				<th [className]="'AlignRight'">Cost</th>
+				<th [className]="'AlignRight'">Value</th>            
+				<th [className]="'AlignRight'">Profit</th>
+				<th [className]="'AlignRight'">ROI</th>
+				</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let x of calls">
+			  <td [className]="'AlignRight'">{{ x.longStrike }}</td>
+			  <td [className]="'AlignRight'">{{ x.longPrice | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.shortStrike }}</td>
+			  <td [className]="'AlignRight'">{{ x.shortPrice | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.cost | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.value | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.profit | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.roi | currency }}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+	
+    </div>
+  </div>
+
+  
+  <div class="row">
+    <div class="col-12">
+	
+<div *ngIf="!isEmpty">
+	<table *ngIf="puts" [className]="'table table-striped table-bordered'">
+		<caption>
+			<b>{{ puts[0].ticker }} Put Spreads maturity {{ puts[0].maturity | date : 'M/d/yy' }} Date {{ puts[0].modifiedOn | date : 'M/d/yy h:mm a'}}</b>
+		</caption>
+		<thead>
+		  <tr>
+				<th [className]="'AlignRight'">Long Strike</th>            
+				<th [className]="'AlignRight'">Long Price</th>            
+				<th [className]="'AlignRight'">Short Strike</th>
+				<th [className]="'AlignRight'">Short Price</th>
+				<th [className]="'AlignRight'">Cost</th>
+				<th [className]="'AlignRight'">Value</th>            
+				<th [className]="'AlignRight'">Profit</th>
+				<th [className]="'AlignRight'">ROI</th>
+				</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let x of puts">
+			  <td [className]="'AlignRight'">{{ x.longStrike }}</td>
+			  <td [className]="'AlignRight'">{{ x.longPrice | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.shortStrike }}</td>
+			  <td [className]="'AlignRight'">{{ x.shortPrice | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.cost | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.value | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.profit | currency }}</td>
+			  <td [className]="'AlignRight'">{{ x.roi | currency }}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+	
+    </div>
+  </div>
+</div>

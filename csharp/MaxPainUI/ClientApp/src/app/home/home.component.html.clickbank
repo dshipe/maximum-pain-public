@@ -1,0 +1,87 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">&nbsp;</div>
+  </div>
+  
+	<div class="row">	
+		<div class="col-sm-6 col-md-4 col-lg-3">
+			<app-adsense></app-adsense>
+		</div>	
+		.
+		<div class="col">
+			<div class="row">	
+
+<div class="col-sm-12 col-md-6 col-lg-4">			
+	<div class="mpShadow rounded border MyBox">
+		<a href="/blog/archive/where-do-i-start/">
+			<div class="MyBoxImageWrapper">
+				<img class="MyBoxImage" src="/assets/question_mark_small.png" />
+			</div>
+		</a>
+		<div class="MyBoxTitle">
+			<a href="/blog/archive/where-do-i-start/">
+				Where do I Start?
+			</a>
+		</div>
+		<p>In a nutshell, max pain theory says that the option sellers (called writers) have stock on hand to fulfill the options if they are exercised.  These stock positions are maintained to minimize risk to the sellers, and this maintenance affects the stock price.  So, options can be the tail wagging the dog.</p>
+	</div>	
+</div>
+
+<div class="col-sm-12 col-md-6 col-lg-4">			
+	<div class="mpShadow rounded border MyBox" style="text-align:center">
+		<a href="https://753ebkkiriny-m4epbo8dy5jyk.hop.clickbank.net/">
+		<img src="/assets/RichDad-summit-300x250.png" />
+		</a>
+	</div>
+</div>
+				  
+<div class="col-sm-12 col-md-6 col-lg-4">			
+	<div class="mpShadow rounded border MyBox">
+		<app-subscribe></app-subscribe>
+	</div>
+</div>
+
+<div class="col-sm-12 col-md-6 col-lg-4">			
+	<div class="mpShadow rounded border MyBox">
+		<a href="/options/SPX">
+			<div class="MyBoxImageWrapper">
+				<img class="MyBoxImage" src="/assets/OIWalls2.png" />
+			</div>
+		</a>
+		<div class="MyBoxTitle">
+			<a href="/options/SPX">
+				Option Charts
+			</a>
+		</div>
+		<p>View the Open Interest, Volume and Max Pain data and charts for any stock.  Simply type in the ticker of your favorite stock to see the data.</p>
+	</div>
+</div>
+
+<div class="col-sm-12 col-md-6 col-lg-4" *ngFor="let x of entries">
+		<div class="mpShadow rounded border MyBox">
+			<a href="/blog/archive/{{ addDashes(x.title) }}/">
+				<div class="MyBoxImageWrapper">
+					<img class="MyBoxImage" src="{{ x.imageUrl }}" />
+				</div>
+			</a>
+			<div class="MyBoxTitle">
+				<a href="/blog/archive/{{ addDashes(x.title) }}/">
+					{{ x.title }}
+				</a>
+			</div>
+			<p>{{ getSummary(x.content) }}</p>
+		</div>
+	</div>
+
+			</div>
+		</div>
+	</div>
+	
+    <div class="row">
+      <div class="col-12">
+        <app-scheduled-task isHidden="true"></app-scheduled-task>
+		</div>
+	</div>
+	
+ </div>
+ 

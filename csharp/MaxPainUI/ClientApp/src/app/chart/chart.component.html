@@ -1,0 +1,22 @@
+<div class="ChartWrapper">
+
+	<div id="controls" class="NoMargin">
+		<div [formGroup]="chartForm" style="display:none">
+			<input type="text" formControlName="formChartType" />
+		</div>
+
+		<button id="btnColumn" type="button" class="btn btn-primary btn-sm"
+						(click)="chartForm.get('formChartType').setValue('column'); chartForm.get('formChartType').markAsTouched()">
+			<i class="fa-solid fa-chart-column"></i>
+		</button>
+		<button id="btnColumn" type="button" class="btn btn-primary btn-sm"
+						(click)="chartForm.get('formChartType').setValue('line'); chartForm.get('formChartType').markAsTouched()">
+			<i class="fa-solid fa-chart-line"></i>
+		</button>
+	</div>
+
+
+	<div #myChart class="ChartContainer NoMargin">
+		<img src="assets/loadingDot.gif" />
+	</div>
+</div>

@@ -1,0 +1,42 @@
+<h2>Option Chain</h2>
+<table *ngIf="chain" [className]="'table table-striped table-bordered'">
+	<caption>
+		<b>{{ chain.straddles[0].ticker }} maturity {{ chain.straddles[0].mstr }}</b>
+		&nbsp;created {{ chain.createdOn | date : 'M/d/yy h:mm a'}}
+	</caption>
+	<thead>
+		<tr>
+			<th colspan="4" [className]="'AlignCenter'">Call</th>
+			<th colspan="1" [className]="'AlignRight'">Strike</th>
+			<th colspan="4" [className]="'AlignCenter'">Put</th>
+		</tr>
+		<tr>
+			<th [className]="'AlignRight'">Ask</th>
+			<th [className]="'AlignRight'">OI</th>
+			<th [className]="'AlignRight'">Vol</th>
+			<th [className]="'AlignRight'">IV</th>            
+
+			<th [className]="'AlignRight'">&nbsp;</th>
+
+			<th [className]="'AlignRight'">Ask</th>
+			<th [className]="'AlignRight'">OI</th>
+			<th [className]="'AlignRight'">Vol</th>
+			<th [className]="'AlignRight'">IV</th>            
+		</tr>
+	</thead>
+	<tbody>
+		<tr *ngFor="let x of chain.straddles">
+			<td [className]="'AlignRight'">{{ x.ca | currency }}</td>
+			<td [className]="'AlignRight'">{{ x.coi }}</td>
+			<td [className]="'AlignRight'">{{ x.cv }}</td>
+			<td [className]="'AlignRight'">{{ x.civ | number : '1.3-3' }}</td>
+
+			<td [className]="'AlignRight'"><span style="font-weight:bold;">{{ x.strike | currency }}</span></td>
+
+			<td [className]="'AlignRight'">{{ x.pa | currency }}</td>
+			<td [className]="'AlignRight'">{{ x.poi }}</td>
+			<td [className]="'AlignRight'">{{ x.pv }}</td>
+			<td [className]="'AlignRight'">{{ x.piv | number : '1.3-3' }}</td>
+		</tr>
+	</tbody>
+</table>

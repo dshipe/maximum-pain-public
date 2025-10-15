@@ -1,0 +1,49 @@
+{
+  "version": "2.0",
+  "routeKey": "$default",
+  "rawPath": "/api/options/maxpainpost",
+  "rawQueryString": "",
+  "headers": {
+    "sec-fetch-mode": "cors",
+    "referer": "http://localhost:4200/",
+    "content-length": "41",
+    "x-amzn-tls-version": "TLSv1.3",
+    "sec-fetch-site": "cross-site",
+    "x-forwarded-proto": "https",
+    "accept-language": "en-US,en;q=0.9",
+    "origin": "http://localhost:4200",
+    "x-forwarded-port": "443",
+    "x-forwarded-for": "73.43.16.191",
+    "accept": "application/json, text/plain, */*",
+    "x-amzn-tls-cipher-suite": "TLS_AES_128_GCM_SHA256",
+    "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+    "x-amzn-trace-id": "Root=1-682073e5-333324ee656ce89b17f7f395",
+    "sec-ch-ua-mobile": "?1",
+    "sec-ch-ua-platform": "\"Android\"",
+    "host": "x.lambda-url.us-east-1.on.aws",
+    "content-type": "application/x-www-form-urlencoded",
+    "accept-encoding": "gzip, deflate, br, zstd",
+    "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+    "sec-fetch-dest": "empty"
+  },
+  "requestContext": {
+    "accountId": "anonymous",
+    "apiId": "x",
+    "domainName": "x.lambda-url.us-east-1.on.aws",
+    "domainPrefix": "x",
+    "http": {
+      "method": "POST",
+      "path": "/api/options/maxpainpost",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "73.43.16.191",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+    },
+    "requestId": "b8222114-0a2f-4e34-8a3b-a9d44496b1d4",
+    "routeKey": "$default",
+    "stage": "$default",
+    "time": "11/May/2025:09:54:45 +0000",
+    "timeEpoch": 1746957285950
+  },
+  "body": "anNvbj1INHNJQUFBQUFBQUFBMU1xU1MwdVVRSUF2MitJTXdZQUFBQT0=",
+  "isBase64Encoded": true
+}
