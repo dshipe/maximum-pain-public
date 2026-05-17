@@ -60,8 +60,9 @@
 
     <div class="row">
       <div class="col-12">
-        <app-chart apiName="HistoryMaxpainPost" title="Max Pan History" key="" json="{{tickerObjJson}}">
-        </app-chart>
+        @defer (on viewport) {
+          <app-chart apiName="HistoryMaxpainPost" title="Max Pan History" key="" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">

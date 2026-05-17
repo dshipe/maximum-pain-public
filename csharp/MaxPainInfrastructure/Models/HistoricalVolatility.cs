@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-
 namespace MaxPainInfrastructure.Models
 {
     public class HistoricalVolatility
     {
-        public string Ticker { get; set; }
+        public string? Ticker { get; set; }
         public decimal ClosePrice { get; set; }
         [Key]
         [Column(TypeName = "smalldatetime")]

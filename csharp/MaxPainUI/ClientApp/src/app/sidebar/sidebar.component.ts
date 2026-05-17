@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output, Inject, PLATFORM_ID } from "@angular/core";
+import { isPlatformBrowser } from '@angular/common';
 import { ThemeService } from '../services/theme.service';
 import { SidebarService } from '../services/sidebar.service';
 
@@ -14,11 +15,14 @@ export class SidebarComponent implements OnInit {
 
   constructor(
     private themeService: ThemeService,
-    private sidebarService: SidebarService
+    private sidebarService: SidebarService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) { }
 
   ngOnInit(): void {
-    this.toggleTheme();
+    if (isPlatformBrowser(this.platformId)) {
+      this.toggleTheme();
+    }
 
     this.sidebarService.sidebarChanges().subscribe(isActive => {
       //console.log("sidebar.component.ts: sidebarChanges isActive=" + isActive);

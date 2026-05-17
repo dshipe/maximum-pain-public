@@ -8,7 +8,7 @@ namespace MaxPainInfrastructure.Services
         #region Auth
         public Task<string> GetSchwabLoginUrl(string callbackUrl);
         public Task<ScwToken> GetRefreshToken(string code, string callbackUrl);
-        public Task<ScwToken> UpdateToken(ScwToken token);
+        public Task<ScwToken> UpdateToken(ScwToken token, bool force = false);
         #endregion
 
         #region Options

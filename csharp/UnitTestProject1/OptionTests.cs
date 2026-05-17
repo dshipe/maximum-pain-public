@@ -1,3 +1,4 @@
+using MaxPainChart;
 using MaxPainInfrastructure.Code;
 using MaxPainInfrastructure.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -17,14 +18,10 @@ namespace UnitTestProject1
         {
             OptChn chain = await FinDataSvc.FetchOptionData("QQQ");
             string json = DBHelper.Serialize(chain);
-            string jsonFile = string.Format(@"{0}\json\OptionChain.json", Directory.GetCurrentDirectory());
+            var jsonFile = Path.Combine(TestHelper.ProjectPath(), "json", "OprionChain.json");
             System.IO.File.WriteAllText(jsonFile, json.Replace("}", "}\r\n"));
 
-            string xml = Utility.SerializeXml<OptChn>(chain);
-            string xmlFile = string.Format(@"{0}\json\OptionChain.xml", Directory.GetCurrentDirectory());
-            System.IO.File.WriteAllText(xmlFile, xml.Replace("/>", "/>\r\n"));
-
-            Assert.AreNotEqual(chain.Options.Count, 0);
+            Assert.AreNotEqual(0, chain.Options.Count);
         }
 
         [TestMethod]
@@ -32,9 +29,9 @@ namespace UnitTestProject1
         {
             //OptChn chain = MaxPainHelper.DebugOptions(false);
 
-            OptChn chain = await FinDataSvc.FetchOptionData("qqq");
+            OptChn chain = await FinDataSvc.FetchOptionData("bac");
             string json = DBHelper.Serialize(chain);
-            string jsonFile = string.Format(@"{0}\json\OptionChain.json", Directory.GetCurrentDirectory());
+            var jsonFile = Path.Combine(TestHelper.ProjectPath(), "json", "OprionChain.json");
             System.IO.File.WriteAllText(jsonFile, json.Replace("}", "}\r\n"));
 
             SdlChn sc = CalculationSvc.BuildStraddle(chain);
@@ -42,8 +39,33 @@ namespace UnitTestProject1
             jsonFile = Path.Combine(TestHelper.ProjectPath(), "json", "StraddleChain.json");
             System.IO.File.WriteAllText(jsonFile, json.Replace("}", "}\r\n"));
 
-            Assert.AreNotEqual(sc.Straddles.Count, 0);
+            Assert.AreNotEqual(0, sc.Straddles.Count);
         }
+
+        [TestMethod]
+        public async Task MaxPainPost()
+        {
+            //OptChn chain = MaxPainHelper.DebugOptions(false);
+
+            OptChn chain = await FinDataSvc.FetchOptionData("spy");
+            string json = DBHelper.Serialize(chain);
+            var jsonFile = Path.Combine(TestHelper.ProjectPath(), "json", "OprionChain.json");
+            System.IO.File.WriteAllText(jsonFile, json.Replace("}", "}\r\n"));
+
+            SdlChn sc = CalculationSvc.BuildStraddle(chain);
+            json = DBHelper.Serialize(sc);
+            jsonFile = Path.Combine(TestHelper.ProjectPath(), "json", "StraddleChain.json");
+            System.IO.File.WriteAllText(jsonFile, json.Replace("}", "}\r\n"));
+
+            var oneMaturity = CalculationSvc.FilterSdlChn(sc);
+            MPChain mpChain = CalculationSvc.Calculate(oneMaturity);
+            json = DBHelper.Serialize(mpChain);
+            jsonFile = Path.Combine(TestHelper.ProjectPath(), "json", "MPChain.json");
+            System.IO.File.WriteAllText(jsonFile, json.Replace("}", "}\r\n"));
+
+            Assert.AreNotEqual(0, mpChain.Items.Count);
+        }
+
 
         public async Task StraddleChainController()
         {
@@ -59,7 +81,7 @@ namespace UnitTestProject1
             jsonFile = Path.Combine(TestHelper.ProjectPath(), "json", "StraddleChain.json");
             System.IO.File.WriteAllText(jsonFile, json.Replace("}", "}\r\n"));
 
-            Assert.AreNotEqual(sc.Straddles.Count, 0);
+            Assert.AreNotEqual(0, sc.Straddles.Count);
         }
 
 
@@ -76,7 +98,7 @@ namespace UnitTestProject1
             string file = Path.Combine(TestHelper.ProjectPath(), "json", "MaxPain.json");
             System.IO.File.WriteAllText(file, json.Replace("}", "}\r\n"));
 
-            Assert.AreNotEqual(mpc.Items.Count, 0);
+            Assert.AreNotEqual(0, mpc.Items.Count);
         }
 
         /*
@@ -109,9 +131,9 @@ namespace UnitTestProject1
             string json = DBHelper.Serialize(info);
             string file = Path.Combine(TestHelper.ProjectPath(), "json", "ChartInfo.json");
 
-            byte[] buffer = ChartSvc.FetchImage(info).Result;
+            byte[] buffer = ChartHelper.RenderChart(info);
             TestHelper.OpenImageBytes(buffer);
-            Assert.AreNotEqual(null, info);
+            Assert.IsNotNull(info);
         }
 
         [TestMethod]
@@ -124,9 +146,9 @@ namespace UnitTestProject1
             string json = DBHelper.Serialize(info);
             string file = Path.Combine(TestHelper.ProjectPath(), "json", "ChartInfo.json");
 
-            byte[] buffer = ChartSvc.FetchImage(info).Result;
+            byte[] buffer = ChartHelper.RenderChart(info);
             TestHelper.OpenImageBytes(buffer);
-            Assert.AreNotEqual(null, info);
+            Assert.IsNotNull(info);
         }
 
         [TestMethod]
@@ -141,9 +163,9 @@ namespace UnitTestProject1
             json = DBHelper.Serialize(info);
             file = Path.Combine(TestHelper.ProjectPath(), "json", "ChartInfo.json");
 
-            byte[] buffer = ChartSvc.FetchImage(info).Result;
+            byte[] buffer = ChartHelper.RenderChart(info);
             TestHelper.OpenImageBytes(buffer);
-            Assert.AreNotEqual(null, info);
+            Assert.IsNotNull(info);
         }
 
         [TestMethod]
@@ -155,9 +177,9 @@ namespace UnitTestProject1
             string json = DBHelper.Serialize(info);
             string file = Path.Combine(TestHelper.ProjectPath(), "json", "ChartInfo.json");
 
-            byte[] buffer = ChartSvc.FetchImage(info).Result;
+            byte[] buffer = ChartHelper.RenderChart(info);
             TestHelper.OpenImageBytes(buffer);
-            Assert.AreNotEqual(null, info);
+            Assert.IsNotNull(info);
         }
 
         [TestMethod]
@@ -169,9 +191,9 @@ namespace UnitTestProject1
             string json = DBHelper.Serialize(info);
             string file = Path.Combine(TestHelper.ProjectPath(), "json", "ChartInfo.json");
 
-            byte[] buffer = ChartSvc.FetchImage(info).Result;
+            byte[] buffer = ChartHelper.RenderChart(info);
             TestHelper.OpenImageBytes(buffer);
-            Assert.AreNotEqual(null, info);
+            Assert.IsNotNull(info);
         }
 
         [TestMethod]
@@ -183,12 +205,10 @@ namespace UnitTestProject1
             string json = DBHelper.Serialize(info);
             string file = Path.Combine(TestHelper.ProjectPath(), "json", "ChartInfo.json");
 
-            byte[] buffer = ChartSvc.FetchImage(info).Result;
+            byte[] buffer = ChartHelper.RenderChart(info);
             TestHelper.OpenImageBytes(buffer);
-            Assert.AreNotEqual(null, info);
+            Assert.IsNotNull(info);
         }
-
-
 
         private async Task<SdlChn> GetSdlChn(string ticker)
         {

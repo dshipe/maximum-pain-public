@@ -1,4 +1,5 @@
-﻿using MaxPainInfrastructure.Code;
+﻿using MaxPainChart;
+using MaxPainInfrastructure.Code;
 using MaxPainInfrastructure.Models;
 using System.Data;
 using System.Web;
@@ -37,35 +38,25 @@ namespace MaxPainInfrastructure.Services
         #region filter
         public SdlChn FilterStraddle(SdlChn sc, bool useStockPrice, int numberOfValues)
         {
-            if (numberOfValues == 0) return sc;
+            if (numberOfValues == 0 || sc.Straddles.Count <= numberOfValues) return sc;
 
-            try
+            var half = numberOfValues / 2;
+            var referencePoint = useStockPrice ? sc.StockPrice : _calculation.Calculate(sc).MaxPain;
+
+            var center = 0;
+            for (int i = 0; i < sc.Straddles.Count; i++)
             {
-                if (sc.Straddles.Count <= numberOfValues) return sc;
-                int half = numberOfValues / 2;
-
-                // find the reference point
-                decimal referencePoint = sc.StockPrice;
-                if (!useStockPrice)
+                if (sc.Straddles[i].Strike() >= referencePoint)
                 {
-                    MPChain mpc = _calculation.Calculate(sc);
-                    referencePoint = mpc.MaxPain;
+                    center = i;
+                    break;
                 }
-
-                // locate the reference strike within the straddles
-                Sdl centerItem = sc.Straddles.First(x => x.Strike() >= referencePoint);
-                int center = sc.Straddles.IndexOf(centerItem);
-
-                // use only the X number of strikes around the reference
-                int min = center - (half - 1);
-                List<Sdl> straddles = sc.Straddles.Skip(min).Take(numberOfValues).ToList();
-
-                sc.Straddles = straddles;
             }
-            catch
-            {
-                throw;
-            }
+
+            var min = Math.Max(0, center - (half - 1));
+            var count = Math.Min(numberOfValues, sc.Straddles.Count - min);
+            sc.Straddles = sc.Straddles.GetRange(min, count);
+
             return sc;
         }
 
@@ -503,65 +494,38 @@ namespace MaxPainInfrastructure.Services
 
         public ChartInfo HistoryMaxPain(List<MaxPainHistory> quotes, bool showStockPrice)
         {
-            ChartInfo info = new ChartInfo();
-            string ticker = quotes[0].TK;
-            string maturityStr = quotes[0].M;
-            info.Title = string.Format("{0} Max Pain History maturity={1} https://{2}", ticker, maturityStr, Constants.DOMAIN);
+            var info = new ChartInfo();
+            var firstQuote = quotes[0];
+            info.Title = $"{firstQuote.TK} Max Pain History maturity={firstQuote.M} https://{Constants.DOMAIN}";
 
             info.ChartType = "line";
             info.DataType = "date";
             info.Enable3D = false;
             info.Interval = 1;
-
             info.VAxisTitle = "Price";
             info.VAxisFormat = "#,##0";
-
             info.HAxisTitle = "Date";
             info.HAxisFormat = "";
 
-            ChartSeries? series = null;
-            if (showStockPrice)
+            var seriesToAdd = new List<(string title, string color, Func<MaxPainHistory, string> valueSelector)>
             {
-                series = new ChartSeries();
-                series.Title = "Stock";
-                series.Color = "#000000";
-                foreach (MaxPainHistory quote in quotes)
+                ("Max Pain", "#336699", q => q.MP.ToString()),
+                ("High Call", "#009900", q => q.COI.ToString()),
+                ("High Put", "#ff0000", q => q.POI.ToString())
+            };
+
+            if (showStockPrice)
+                seriesToAdd.Insert(0, ("Stock", "#000000", q => q.SP.ToString()));
+
+            foreach (var (title, color, valueSelector) in seriesToAdd)
+            {
+                var series = new ChartSeries { Title = title, Color = color };
+                foreach (var quote in quotes)
                 {
-                    ChartPoint point = new ChartPoint(quote.D.ToString(), quote.SP.ToString());
-                    series.Points.Add(point);
+                    series.Points.Add(new ChartPoint(quote.D.ToString(), valueSelector(quote)));
                 }
                 info.Series.Add(series);
             }
-
-            series = new ChartSeries();
-            series.Title = "Max Pain";
-            series.Color = "#336699";
-            foreach (MaxPainHistory quote in quotes)
-            {
-                ChartPoint point = new ChartPoint(quote.D.ToString(), quote.MP.ToString());
-                series.Points.Add(point);
-            }
-            info.Series.Add(series);
-
-            series = new ChartSeries();
-            series.Title = "High Call";
-            series.Color = "#009900";
-            foreach (MaxPainHistory quote in quotes)
-            {
-                ChartPoint point = new ChartPoint(quote.D.ToString(), quote.COI.ToString());
-                series.Points.Add(point);
-            }
-            info.Series.Add(series);
-
-            series = new ChartSeries();
-            series.Title = "High Put";
-            series.Color = "#ff0000";
-            foreach (MaxPainHistory quote in quotes)
-            {
-                ChartPoint point = new ChartPoint(quote.D.ToString(), quote.POI.ToString());
-                series.Points.Add(point);
-            }
-            info.Series.Add(series);
 
             return info;
         }
@@ -657,12 +621,11 @@ namespace MaxPainInfrastructure.Services
         #region Stacked
         public ChartInfo Stacked(SdlChn sc, string title, string key, bool isPut)
         {
-            ChartInfo info = new ChartInfo();
+            var info = new ChartInfo();
             if (sc.Straddles.Count == 0) return info;
 
-            string ticker = sc.Straddles[0].Ticker();
-            string modifiedOn = Utility.GMTToEST(sc.CreatedOn).ToString(Constants.CHART_DATE_FORMAT);
-            info.Title = $"{ticker} {title} created={modifiedOn} https://{Constants.DOMAIN}";
+            var modifiedOn = Utility.GMTToEST(sc.CreatedOn).ToString(Constants.CHART_DATE_FORMAT);
+            info.Title = $"{sc.Straddles[0].Ticker()} {title} created={modifiedOn} https://{Constants.DOMAIN}";
 
             info.ChartType = "stackedcolumn";
             info.Enable3D = false;
@@ -670,45 +633,35 @@ namespace MaxPainInfrastructure.Services
 
             info.VAxisTitle = key;
             info.VAxisFormat = "#,##0.#####";
-
             info.HAxisTitle = "Strike";
             info.HAxisFormat = "#,##0";
 
-            List<string> strikes = new List<string>();
-            foreach (Sdl straddle in sc.Straddles)
+            var strikes = new HashSet<string>();
+            var seriesDict = new Dictionary<string, ChartSeries>();
+
+            foreach (var straddle in sc.Straddles)
             {
-                string type = isPut ? "Put" : "Call";
-                string seriesKey = straddle.Maturity().ToString("MM/dd/yyyy");
+                var seriesKey = straddle.Maturity().ToString("MM/dd/yyyy");
+                var strike = straddle.Strike().ToString();
+                strikes.Add(strike);
 
-                // keep track of all strikes which is X axis
-                string strike = straddle.Strike().ToString();
-                if (!strikes.Contains(strike)) strikes.Add(strike);
-
-                // find the series
-                ChartSeries? series = info.Series.FirstOrDefault(s => s.Title != null && s.Title.Equals(seriesKey));
-                if (series == null)
+                if (!seriesDict.TryGetValue(seriesKey, out var series))
                 {
-                    series = new ChartSeries();
-                    series.Title = seriesKey;
+                    series = new ChartSeries { Title = seriesKey };
+                    seriesDict[seriesKey] = series;
                     info.Series.Add(series);
                 }
 
-                string value = GetLinePoint(sc, straddle, key, isPut);
-                ChartPoint point = new ChartPoint(strike, value);
-                series.Points.Add(point);
+                series.Points.Add(new ChartPoint(strike, GetLinePoint(sc, straddle, key, isPut)));
             }
 
-            // make sure each series has all the strikes
-            foreach (ChartSeries series in info.Series)
+            // Fill missing strikes with zero values
+            foreach (var series in info.Series)
             {
-                foreach (string strike in strikes)
+                var existingStrikes = new HashSet<string>(series.Points.Select(p => p.X));
+                foreach (var strike in strikes.Where(s => !existingStrikes.Contains(s)))
                 {
-                    ChartPoint? point = series.Points.FirstOrDefault(p => p.X.Equals(strike));
-                    if (point == null)
-                    {
-                        point = new ChartPoint(strike, "0");
-                        series.Points.Add(point);
-                    }
+                    series.Points.Add(new ChartPoint(strike, "0"));
                 }
             }
 
@@ -744,55 +697,6 @@ namespace MaxPainInfrastructure.Services
         }
         #endregion
 
-        #region Images
-        public async Task<byte[]> FetchImage(string route, string ticker, DateTime maturity)
-        {
-            string chartDomain = await _secretService.GetValue("ConstChartDomain");
-            string url = $"http://{chartDomain}/image/{route}/{ticker}";
-            if (maturity != DateTime.MinValue)
-            {
-                url = $"http://{chartDomain}/image/{route}/{ticker}?m={maturity}";
-            }
-
-            HttpClient client = new HttpClient();
-            byte[] buffer = await client.GetByteArrayAsync(url);
-            return buffer;
-        }
-
-        public async Task<byte[]> FetchImage(ChartInfo info)
-        {
-            string chartDomain = await _secretService.GetValue("ConstChartDomain");
-            string url = "http://{0}/Image/PostJson";
-            url = string.Format(url, chartDomain);
-
-            string json = DBHelper.Serialize(info);
-            string payload = string.Format("json={0}", HttpUtility.UrlEncode(json));
-
-            return await PostURI(url, payload);
-        }
-
-        public async Task<byte[]> PostURI(string url, string payload)
-        {
-            // Use HttpClientFactory for better performance and resource management
-            using (var client = new HttpClient())
-            {
-                var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
-                var response = await client.PostAsync(url, content);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadAsByteArrayAsync();
-            }
-        }
-
-        private byte[] ReadFully(Stream input)
-        {
-            // Use MemoryStream for better performance
-            using (var ms = new MemoryStream())
-            {
-                input.CopyTo(ms);
-                return ms.ToArray();
-            }
-        }
-        #endregion
     }
 }
 

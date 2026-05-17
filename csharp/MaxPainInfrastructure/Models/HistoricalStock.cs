@@ -32,7 +32,7 @@
     {
 
         [System.Xml.Serialization.XmlElementAttribute("HistoricalStock")]
-        public HistoricalStock[] HistoricalStock { get; set; }
+        public HistoricalStock[]? HistoricalStock { get; set; }
     }
 
     /// <remarks/>
@@ -41,7 +41,7 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
     public partial class HistoricalStock
     {
-        public string symbol { get; set; }
+        public string? symbol { get; set; }
         public decimal lastPrice { get; set; }
         public decimal openPrice { get; set; }
         public decimal highPrice { get; set; }
@@ -52,7 +52,7 @@
 
     public class StkPrc
     {
-        public string d { get; set; }
+        public string? d { get; set; }
         public decimal p { get; set; }
     }
 

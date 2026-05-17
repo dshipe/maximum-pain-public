@@ -5,8 +5,7 @@ import { takeUntil, switchMap, tap, map } from 'rxjs/operators'
 
 import { DataService } from '../services/data.service';
 import { UtilsService } from '../services/utils.service';
-import { Ticker } from "../models/ticker";
-import { MPChn, MPItem } from "../models/MaxPainItem";
+import { MPChn, MPItem } from "../models/maxpainitem";
 
 @Component( {
   selector: 'app-maxpain',

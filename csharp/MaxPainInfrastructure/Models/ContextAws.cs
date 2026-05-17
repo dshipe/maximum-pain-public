@@ -66,6 +66,11 @@ namespace MaxPainInfrastructure.Models
             return await DBHelper.FetchScalar(this.Database, sql, parms, fieldName);
         }
 
+        public async Task<List<T>> FetchModel<T>(string sql, List<SqlParameter>? parms, int timeout)
+        {
+            return await DBHelper.FetchModel<T>(this.Database, sql, parms, timeout);
+        }
+
         public async Task<string> SettingsRead()
         {
             string sql = "SELECT Id, Content, ModifiedOn FROM SettingsXml WITH(NOLOCK)";
@@ -102,6 +107,7 @@ namespace MaxPainInfrastructure.Models
                 tickers.AddRange(new[]
                 {
                     new PythonTicker { Ticker = "SPX", Source = "sp500", CreatedOn = DateTime.UtcNow },
+                    new PythonTicker { Ticker = "SPY", Source = "sp500", CreatedOn = DateTime.UtcNow },
                     new PythonTicker { Ticker = "QQQ", Source = "sp500", CreatedOn = DateTime.UtcNow }
                 });
             }

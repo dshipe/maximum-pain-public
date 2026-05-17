@@ -2,6 +2,7 @@
 using IO.ClickSend.ClickSend.Model;
 using IO.ClickSend.Client;
 using MaxPainInfrastructure.Code;
+using Telegram.Bot;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
@@ -17,26 +18,29 @@ namespace MaxPainInfrastructure.Services
             _secretService = secretService;
         }
 
+        public async Task<string> SendTelegram(string content)
+        {
+            string chatId = await _secretService.GetValue("TelegramChatId");
+            return await SendTelegram(chatId, content);
+        }
+
+        public async Task<string> SendTelegram(string chatId, string content)
+        {
+            string token = await _secretService.GetValue("TelegramBotToken");
+            var bot = new TelegramBotClient(token);
+            var message = await bot.SendMessage(chatId, content);
+            return DBHelper.Serialize(message);
+        }
+
+        // Kept for reference — routes through Telegram instead of Twilio
         public async Task<string> SendWhatsapp(string content)
         {
-            return await SendWhatsapp("4043086715", content);
+            return await SendTelegram(content);
         }
 
         public async Task<string> SendWhatsapp(string phone, string content)
         {
-            string authToken = await _secretService.GetValue("TwilioAuthToken");
-            string accountSid = await _secretService.GetValue("TwilioAccountSid");
-
-            TwilioClient.Init(accountSid, authToken);
-
-            var messageOptions = new CreateMessageOptions(
-              new PhoneNumber($"whatsapp:+1{phone}"));
-
-            messageOptions.From = new PhoneNumber("whatsapp:+14155238886");
-            messageOptions.Body = content;
-
-            var message = MessageResource.Create(messageOptions);
-            return DBHelper.Serialize(message);
+            return await SendTelegram(content);
         }
 
         public async Task<string> SendTextMessage(string content)
@@ -79,7 +83,7 @@ namespace MaxPainInfrastructure.Services
                 // Serialize the result to JSON using JsonConvert
                 return DBHelper.Serialize(result);
             }
-            catch (Exception e)
+            catch
             {
                 throw;
             }

@@ -1,4 +1,6 @@
-import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges } from '@angular/core';
+import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
@@ -29,7 +31,9 @@ export class DownloadCsvComponent implements OnInit {
 	  private data: DataService,
     private utils: UtilsService,
 	  private state: StateService,
-	  private title: Title) { 
+	  private title: Title,
+    @Inject(PLATFORM_ID) private platformId: Object,
+    @Inject(DOCUMENT) private doc: Document) { 
           
     // override the route reuse strategy
     this.route.routeReuseStrategy.shouldReuseRoute = function() {
@@ -39,6 +43,12 @@ export class DownloadCsvComponent implements OnInit {
 
   ngOnInit() {
     this.tickerObj = this.state.initialize(this.actRoute, this.utils);
+
+    if (!this.actRoute.snapshot.params.id) {
+      this.redirect('download-csv', this.tickerObj.Ticker);
+      return;
+    }
+
     this.title.setTitle(this.tickerObj.Ticker + " Download");
 
     this.createForm();
@@ -127,12 +137,11 @@ export class DownloadCsvComponent implements OnInit {
     csv.unshift(header.join(','));
     let csvArray = csv.join('\r\n');
 
+    if (!isPlatformBrowser(this.platformId)) { return; }
     var blob = new Blob([csvArray], {type: 'text/csv' }),
     url = window.URL.createObjectURL(blob);
-    
-    //window.open(url);
 
-    var a = document.createElement('a');
+    var a = this.doc.createElement('a');
     a.href = url;
     a.download = this.tickerObj.Ticker + ".csv";
     a.click();

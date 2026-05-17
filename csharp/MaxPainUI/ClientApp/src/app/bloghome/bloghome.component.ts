@@ -1,9 +1,12 @@
-import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges } from '@angular/core';
+
+import { isPlatformBrowser } from '@angular/common';
+import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges, Inject, PLATFORM_ID } from '@angular/core';
 import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
 import { takeUntil, switchMap, tap, map } from 'rxjs/operators'
-import { Title } from "@angular/platform-browser";
+import { Title, Meta } from "@angular/platform-browser";
+import { SeoService } from '../services/seo.service';
 
 import { DataService } from '../services/data.service';
 import { UtilsService } from '../services/utils.service';
@@ -22,7 +25,10 @@ export class BloghomeComponent implements OnInit {
     private actRoute: ActivatedRoute,
     private route: Router,
     private utils: UtilsService,
-    private title: Title) {
+    private title: Title,
+    private meta: Meta,
+    private seo: SeoService,
+    @Inject(PLATFORM_ID) private platformId: Object) {
 
     // override the route reuse strategy
     this.route.routeReuseStrategy.shouldReuseRoute = function () {
@@ -31,7 +37,14 @@ export class BloghomeComponent implements OnInit {
   }
 	
   ngOnInit() {
-    this.title.setTitle("Blog");
+    this.seo.updateMetaTags({
+      title: 'Options Trading Blog | Maximum-Pain.com',
+      description: 'Articles and analysis on options trading, max pain theory, open interest, and market direction. Insights for active options traders.',
+      keywords: 'options trading blog, max pain analysis, open interest analysis, options strategy, options market insights',
+      url: 'https://maximum-pain.com/blog'
+    });
+
+    if (!isPlatformBrowser(this.platformId)) { return; }
     
     let observable$: Observable<Array<BlogEntry>> =
       this.data.getBlogEntries();

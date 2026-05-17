@@ -9,11 +9,5 @@
         public Task<string> ReadXml();
 
         public Task<bool> SaveXml(string xml);
-
-        #region Connection
-        public string GetConnectionAWS();
-
-        public string GetConnectionHome();
-        #endregion
     }
 }

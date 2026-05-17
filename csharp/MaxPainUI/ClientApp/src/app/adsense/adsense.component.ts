@@ -1,32 +1,35 @@
-import {Component,OnInit,AfterViewInit} from '@angular/core'
+import { Component, OnInit, AfterViewInit, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component( {
   selector: 'app-adsense',
   templateUrl: './adsense.component.html',
   styleUrls: ['./adsense.component.scss']
 })
-export class AdsenseComponent implements OnInit {
+export class AdsenseComponent implements OnInit, AfterViewInit {
 
-  // large rectangle 7363818743
-  // banner 5981741182
+  isBrowser: boolean;
 
-  constructor() { }
-
-  ngOnInit() {
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
+  ngOnInit() {}
+
   ngAfterViewInit() {
-    this.withTimeout();
+    if (this.isBrowser) {
+      this.withTimeout();
+    }
   }
 
   withTimeout() {
-    setTimeout(()=>this.noTimeout(),250);
+    setTimeout(() => this.noTimeout(), 250);
   }
 
   noTimeout() {
-    try{
+    try {
       (window['adsbygoogle'] = window['adsbygoogle'] || []).push({});
-    }catch(e){
+    } catch(e) {
       console.error(e);
     }
   }

@@ -1,4 +1,6 @@
 <div class="container-fluid">
+    <!-- H1 for SEO: visually integrated into page heading -->
+    <h1 class="visually-hidden">{{tickerObj?.Ticker}} Max Pain Calculator</h1>
     <div class="row">
       <div class="col-12">&nbsp;</div>
     </div>
@@ -89,18 +91,22 @@ Open Interest is updated every morning on days the markets are open. This is the
       </div>
       <div class="row">
         <div class="col-12">
-          <div *ngIf="hasScrolledPast1">
+          @defer (on viewport) {
             <app-chart apiName="LineDoublePost" title="Volume Chart" key="Volume" json="{{tickerObjJson}}">
             </app-chart>
-          </div>
+          } @placeholder {
+            <div style="min-height:200px"></div>
+          }
         </div>
       </div>
       <div class="row">
         <div class="col-12">
-          <div *ngIf="hasScrolledPast2">
+          @defer (on viewport) {
             <app-chart apiName="MaxPainPost" title="Max Pain" key="" json="{{mpChain | json}}">
             </app-chart>
-          </div>
+          } @placeholder {
+            <div style="min-height:200px"></div>
+          }
         </div>
       </div>
       <div class="row">

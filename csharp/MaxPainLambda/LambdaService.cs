@@ -1,4 +1,4 @@
-﻿using Amazon.Lambda.APIGatewayEvents;
+using Amazon.Lambda.APIGatewayEvents;
 using MaxPainInfrastructure.Code;
 using MaxPainInfrastructure.Models;
 using MaxPainInfrastructure.Models.Schwab;
@@ -99,6 +99,7 @@ namespace MaxPainLambda
                         ScwToken? token = await AuthInitialize();
                         string callbackUrl = await _configurationSvc.Get("SchwabCallbackUrl");
                         string url = await _schwabSvc.GetSchwabLoginUrl(callbackUrl);
+                        await _loggerSvc.InfoAsync("GetSchwabLoginUrl", url);
                         return ReturnRedirect(url);
                     }
                     if (string.Equals(apiMethod, "callbackschwaburl"))
@@ -114,18 +115,18 @@ namespace MaxPainLambda
                 {
                     if (string.Equals(apiMethod, "entries"))
                     {
-                        responseContent = DBHelper.Serialize(await _awsContext.BlogEntry.ToListAsync());
+                        responseContent = DBHelper.Serialize(await _awsContext.BlogEntry.AsNoTracking().ToListAsync());
                     }
                     if (string.Equals(apiMethod, "entry"))
                     {
                         long id = Convert.ToInt32(ParseUrlParameter(request));
-                        responseContent = DBHelper.Serialize(await _awsContext.BlogEntry.FirstOrDefaultAsync(x => x.Id == id));
+                        responseContent = DBHelper.Serialize(await _awsContext.BlogEntry.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id));
                     }
                     if (string.Equals(apiMethod, "entrybytitle"))
                     {
                         string title = QueryValue<string>(request, "title");
                         string noDash = title.Replace("-", string.Empty).ToLower();
-                        responseContent = DBHelper.Serialize(await _awsContext.BlogEntry.FirstOrDefaultAsync(x => x.Title.ToLower() == noDash));
+                        responseContent = DBHelper.Serialize(await _awsContext.BlogEntry.AsNoTracking().FirstOrDefaultAsync(x => x.Title.ToLower() == noDash));
                     }
                     if (string.Equals(apiMethod, "upsert"))
                     {
@@ -340,6 +341,7 @@ namespace MaxPainLambda
                 #endregion
 
                 #region Email
+
                 if (string.Equals(controller, "email"))
                 {
                     if (string.Equals(apiMethod, "send"))
@@ -349,6 +351,7 @@ namespace MaxPainLambda
                         if (msg != null)
                         {
                             responseContent = await _emailSvc.SendEmail(msg.From, msg.To, msg.CC, msg.BCC, msg.Subject, msg.Body, msg.AttachmentCSV, msg.IsHtml);
+                            if (string.IsNullOrEmpty(responseContent)) responseContent =   DBHelper.Serialize(msg);
                         }
                     }
                     if (string.Equals(apiMethod, "test"))
@@ -381,7 +384,7 @@ namespace MaxPainLambda
                 {
                     if (string.Equals(apiMethod, "stats"))
                     {
-                        responseContent = DBHelper.Serialize(await _awsContext.EmailStat.ToListAsync());
+                        responseContent = DBHelper.Serialize(await _awsContext.EmailStat.AsNoTracking().ToListAsync());
                     }
                     if (string.Equals(apiMethod, "screener"))
                     {
@@ -438,25 +441,23 @@ namespace MaxPainLambda
                 {
                     if (string.Equals(apiMethod, "runimport"))
                     {
-                        DateTime utc = QueryValue<DateTime>(request, "utc", false, DateTime.MinValue.ToString());
                         bool debug = QueryValue<bool>(request, "debug", false, "false");
                         bool sendEmail = QueryValue<bool>(request, "sendEmail", false, "false");
                         bool useMessage = QueryValue<bool>(request, "useMessage", false, "true");
                         string pw = QueryValue<string>(request, "pw");
 
-                        await _loggerSvc.InfoAsync($"Lambda:FinImport:RunImport BEGIN debug={debug} utc={utc} sendEmail={sendEmail}", string.Empty);
+                        await _loggerSvc.InfoAsync($"Lambda:FinImport:RunImport BEGIN debug={debug} sendEmail={sendEmail}", string.Empty);
 
                         string passPhrase = await _secretSvc.GetValue("PassPhrase");
                         if (string.Compare(pw, passPhrase, false) != 0)
                         {
                             await _loggerSvc.InfoAsync($"Lambda:FinImport:RunImport  END password is incorrect.  passPhrase=\"{passPhrase}\" pw=\"{pw}\"", string.Empty);
-                            responseContent = $"Lambda:FinImport:RunImport END debug={debug} utc={utc} sendEmail={sendEmail}\r\npassword is incorrect";
+                            responseContent = $"Lambda:FinImport:RunImport END debug={debug} sendEmail={sendEmail}\r\npassword is incorrect";
                         }
                         else
                         {
-                            _finImportSvc.UseMessage = true; // useMessage;
+                            _finImportSvc.UseMessage = false; // set to false so it doesn't do multiple DB inserts
                             _finImportSvc.IsDebug = debug;
-                            _finImportSvc.ImportDateUTC = utc;
 
                             string log = await _finImportSvc.RunImport();
 
@@ -468,22 +469,126 @@ namespace MaxPainLambda
 
                             if (sendEmail && _finImportSvc.IsMarketOpen)
                             {
-                                string xml = await _awsContext.SettingsRead();
-                                XmlDocument xmlSettings = new XmlDocument();
-                                xmlSettings.LoadXml(xml);
-
-                                await _loggerSvc.InfoAsync($"FinImportController.RunImport SEND EMAIL sendEmail={sendEmail} isMarketOpen={_finImportSvc.IsMarketOpen} debug={debug}", string.Empty);
-                                string imageTicker = await _configurationSvc.Get("ScreenerImageTicker");
-                                string html = await _emailSvc.ScreenerGenerate(true, true, string.Empty, false);
-                                await _loggerSvc.InfoAsync($"FinImportController.RunImport END", string.Empty);
+                                string html = await _emailSvc.ScreenerGenerate(true, true, string.Empty, debug);
                             }
 
                             responseContent = log;
                         }
                     }
+                    if (string.Equals(apiMethod, "io_preprocess"))
+                    {
+                        string pw = QueryValue<string>(request, "pw");
+                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
+                        if (string.Compare(pw, passPhrase, false) != 0)
+                        {
+                            responseContent = "{\"success\":\"false\"}";
+                        }
+                        else
+                        {
+                            DateTime marketDate = await _finImportSvc.IO_PreProcess();
+                            string json = $"<\"success\":\"true\", \"marketDate\":\"{marketDate.ToString("MM/dd/yyyy")}\", isWeekend:\"{_finImportSvc.IsWeekend}\", isMorning:\"{_finImportSvc.IsMorning}\">";
+                            responseContent = json.Replace("<", "{").Replace(">", "}");
+                            await _loggerSvc.InfoAsync("LambdaService: io_preprocess API called", responseContent);
+
+                        }
+                    }
+                    if (string.Equals(apiMethod, "io_processchar"))
+                    {
+                        DateTime marketDate = QueryValue<DateTime>(request, "marketDate");
+                        char c = QueryValue<char>(request, "c");
+                        bool debug = QueryValue<bool>(request, "debug", false, "false");
+                        string pw = QueryValue<string>(request, "pw");
+
+                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
+                        if (string.Compare(pw, passPhrase, false) != 0)
+                        {
+                            responseContent = "{\"success\":\"false\"}";
+                        }
+                        else
+                        {
+                            _finImportSvc.IsDebug = debug;
+                            var quotes = await _finImportSvc.IO_ProcessChar(marketDate, c);
+                            //responseContent = DBHelper.Serialize(quotes);
+                            responseContent = "{\"success\":\"true\"}";
+                        }
+                    }
+                    if (string.Equals(apiMethod, "io_postprocess"))
+                    {
+                        DateTime marketDate = QueryValue<DateTime>(request, "marketDate");
+                        bool isMorning = QueryValue<bool>(request, "isMorning", false, "false");
+                        bool debug = QueryValue<bool>(request, "debug", false, "false");
+                        string pw = QueryValue<string>(request, "pw");
+
+                        await _loggerSvc.InfoAsync($"LambdaService: io_postprocess API called marketDate={marketDate} isMorning={isMorning} debug={debug}", string.Empty);
+
+
+                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
+                        if (string.Compare(pw, passPhrase, false) != 0)
+                        {
+                            responseContent = "{\"success\":\"false\"}";
+                        }
+                        else
+                        {
+                            _finImportSvc.IsDebug = debug;
+                            await _finImportSvc.IO_PostProcess(marketDate, isMorning);
+                            responseContent = "{\"success\":\"true\"}";
+                        }
+                    }
+                    if (string.Equals(apiMethod, "io_importstocks"))
+                    {
+                        DateTime marketDate = QueryValue<DateTime>(request, "marketDate");
+                        bool debug = QueryValue<bool>(request, "debug", false, "false");
+
+                        string pw = QueryValue<string>(request, "pw");
+                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
+                        if (string.Compare(pw, passPhrase, false) != 0)
+                        {
+                            responseContent = "{\"success\":\"false\"}";
+                        }
+                        else
+                        {
+                            _finImportSvc.IsDebug = debug;
+                            responseContent = await _finImportSvc.ImportStocks();
+                        }
+                    }
+                    if (string.Equals(apiMethod, "io_processticker"))
+                    {
+                        string ticker = QueryValue<string>(request, "ticker");
+                        responseContent = DBHelper.Serialize(await _finDataSvc.FetchOptions(ticker, true));
+                    }
+                    if (string.Equals(apiMethod, "io_patchvolume"))
+                    {
+                        await _loggerSvc.InfoAsync("LambdaService: io_patchvolume API called", string.Empty);
+
+                        DateTime marketDate = QueryValue<DateTime>(request, "marketDate");
+                        string ticker = QueryValue<string>(request, "ticker", false, null);
+
+                        string pw = QueryValue<string>(request, "pw");
+                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
+                        if (string.Compare(pw, passPhrase, false) != 0)
+                        {
+                            responseContent = "{\"success\":\"false\"}";
+                        }
+                        else
+                        {
+                            DateTime start = DateTime.UtcNow;
+                            int updated = await _finImportSvc.IO_PatchVolume(marketDate, ticker);
+
+                            var jsonObj = new
+                            {
+                                importDate = marketDate,
+                                start = start,
+                                complete = DateTime.UtcNow,
+                                count = updated
+                            };
+
+                            responseContent = DBHelper.Serialize(jsonObj);
+                        }
+                    }
+
                     if (string.Equals(apiMethod, "getlastdatemarketopen"))
                     {
-                        DateTime est = MaxPainInfrastructure.Code.Utility.CurrentDateEST();
+                        DateTime est = Utility.CurrentDateEST();
                         est = QueryValue<DateTime>(request, "est", false, est.ToString());
                         responseContent = (await _finImportSvc.GetLastDayMarketOpen(est)).ToString();
                     }
@@ -499,52 +604,6 @@ namespace MaxPainLambda
                         await _loggerSvc.InfoAsync($"FinImportController.SendEmail END", string.Empty);
 
                         responseContent = html;
-                    }
-                    if (string.Equals(apiMethod, "importoptions"))
-                    {
-                        DateTime utc = QueryValue<DateTime>(request, "utc");
-                        bool debug = QueryValue<bool>(request, "debug", false, "false");
-                        bool saveMessage = QueryValue<bool>(request, "saveMessage", false, "true");
-                        string tickersCSV = QueryValue<string>(request, "tickersCSV");
-                        string pw = QueryValue<string>(request, "password");
-
-                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
-                        if (pw == null || !pw.Equals(passPhrase))
-                        {
-                            responseContent = $"Lambda:FinImport:importoptions password is incorrect";
-                        }
-                        else
-                        {
-                            _finImportSvc.IsDebug = debug;
-                            _finImportSvc.UseMessage = saveMessage;
-                            _finImportSvc.ImportDateUTC = utc;
-
-                            if (!string.IsNullOrEmpty(tickersCSV)) _finImportSvc.TickersCSV = tickersCSV;
-
-                            DateTime? dt = await _finImportSvc.FetchMarketDate();
-                            if (!dt.HasValue)
-                            {
-                                await _finImportSvc.ImportOptions(dt.Value);
-                            }
-                            responseContent = _finImportSvc.GetLog();
-                        }
-                    }
-                    if (string.Equals(apiMethod, "importstocks"))
-                    {
-                        DateTime dt = QueryValue<DateTime>(request, "dt");
-                        bool debug = QueryValue<bool>(request, "debug", false, "false");
-                        bool saveMessage = QueryValue<bool>(request, "saveMessage", false, "true");
-                        string pw = QueryValue<string>(request, "password");
-
-                        string passPhrase = await _secretSvc.GetValue("PassPhrase");
-                        if (pw == null || !pw.Equals(passPhrase))
-                        {
-                            responseContent = $"Lambda:FinImport:importstocks password is incorrect";
-                        }
-                        else
-                        {
-                            responseContent = await _finImportSvc.ImportStocks(dt);
-                        }
                     }
                     if (string.Equals(apiMethod, "getmarketcalendar"))
                     {
@@ -563,7 +622,7 @@ namespace MaxPainLambda
                             loopDate = loopDate.AddDays(1);
                         }
 
-                        responseContent = DBHelper.Serialize(await _homeContext.MarketCalendar.Where(mc => mc.Date >= min && mc.Date <= max).ToListAsync());
+                        responseContent = DBHelper.Serialize(await _homeContext.MarketCalendar.AsNoTracking().Where(mc => mc.Date >= min && mc.Date <= max).ToListAsync());
                     }
                     if (string.Equals(apiMethod, "showmarketcalendar"))
                     {
@@ -571,6 +630,7 @@ namespace MaxPainLambda
                         if (top30)
                         {
                             responseContent = DBHelper.Serialize(await _homeContext.MarketCalendar
+                                .AsNoTracking()
                                 .OrderByDescending(c => c.Date)
                                 .Take(30)
                                 .ToListAsync());
@@ -578,6 +638,7 @@ namespace MaxPainLambda
                         else
                         {
                             responseContent = DBHelper.Serialize(await _homeContext.MarketCalendar
+                                .AsNoTracking()
                                 .ToListAsync());
                         }
                     }
@@ -588,12 +649,6 @@ namespace MaxPainLambda
                     if (string.Equals(apiMethod, "importmaxpain"))
                     {
                         responseContent = DBHelper.Serialize(await _homeContext.ImportMaxPainRecentRead());
-                    }
-                    if (string.Equals(apiMethod, "transform"))
-                    {
-                        DateTime start = QueryValue<DateTime>(request, "start");
-                        //string pw = QueryValue<string>(request, "password");
-                        responseContent = await _finImportSvc.DoTransform(start);
                     }
                     if (string.Equals(apiMethod, "stocktickers"))
                     {
@@ -611,7 +666,7 @@ namespace MaxPainLambda
                         int count = QueryValue<int>(request, "count", false, "30");
                         string sql = @"
 			            SELECT CreatedOn, COUNT(*) AS Records 
-			            FROM HistoricalOptionQuoteXML 
+			            FROM HistoricalOptionQuote 
 			            WHERE CreatedOn >DATEADD(dd, -30, GETUTCDATE())
 			            GROUP BY CreatedOn
 			            ORDER BY CreatedOn DESC
@@ -633,7 +688,7 @@ namespace MaxPainLambda
                     if (string.Equals(apiMethod, "importlog"))
                     {
                         int count = QueryValue<int>(request, "count", false, "30");
-                        List<ImportLog> logs = await _homeContext.ImportLog.ToListAsync();
+                        List<ImportLog> logs = await _homeContext.ImportLog.AsNoTracking().ToListAsync();
                         logs = logs.OrderByDescending(x => x.ID).Take(count).ToList();
                         responseContent = DBHelper.Serialize(logs);
                     }
@@ -643,76 +698,7 @@ namespace MaxPainLambda
                         DateTime end = QueryValue<DateTime>(request, "end");
                         responseContent = DBHelper.Serialize(await _finImportSvc.RebuildPains(begin, end));
                     }
-                    if (string.Equals(apiMethod, "patchvolume"))
-                    {
-                        DateTime importDate = QueryValue<DateTime>(request, "importDate");
-                        string ticker = QueryValue<string>(request, "ticker");
 
-                        DateTime start = DateTime.UtcNow;
-                        int updated = await _finImportSvc.PatchVolume(importDate, ticker);
-                        DateTime complete = DateTime.UtcNow;
-
-                        var jsonObj = new
-                        {
-                            importDate = importDate,
-                            start = start,
-                            complete = complete,
-                            count = updated
-                        };
-
-                        responseContent = DBHelper.Serialize(jsonObj);
-                    }
-                    if (string.Equals(apiMethod, "mostactive"))
-                    {
-                        DateTime utc = QueryValue<DateTime>(request, "utc");
-                        bool debug = QueryValue<bool>(request, "debug", false, "false");
-
-                        HistoryDate history = await _historySvc.GetHistoryDate();
-                        DateTime currentDate = history.CurrentDate;
-                        DateTime previousDate = history.PreviousDate;
-
-                        if (utc != DateTime.MinValue)
-                        {
-                            currentDate = utc;
-                            previousDate = await _historySvc.PreviousMarketCalendar(currentDate);
-                        }
-
-                        List<OptChn> currentList = await _historySvc.ChainGetByDate(currentDate);
-
-                        _finImportSvc.IsDebug = debug;
-                        _finImportSvc.UseMessage = true;
-                        List<MostActive> actives = await _finImportSvc.MostActive(currentList, previousDate);
-
-                        responseContent = DBHelper.Serialize(actives);
-                    }
-                    if (string.Equals(apiMethod, "outsideoiwalls"))
-                    {
-                        DateTime utc = QueryValue<DateTime>(request, "utc");
-                        bool debug = QueryValue<bool>(request, "debug", false, "false");
-
-                        HistoryDate history = await _historySvc.GetHistoryDate();
-                        DateTime currentDate = history.CurrentDate;
-                        DateTime previousDate = history.PreviousDate;
-
-                        if (utc != DateTime.MinValue)
-                        {
-                            currentDate = utc;
-                            previousDate = await _historySvc.PreviousMarketCalendar(currentDate);
-                        }
-
-                        List<SdlChn> straddles = new List<SdlChn>();
-                        List<OptChn> options = await _historySvc.ChainGetByDate(currentDate);
-                        foreach (OptChn oc in options)
-                        {
-                            straddles.Add(_calculationSvc.BuildStraddle(oc));
-                        }
-
-                        _finImportSvc.IsDebug = debug;
-                        _finImportSvc.UseMessage = true;
-                        List<OutsideOIWalls> walls = await _finImportSvc.OutsideOIWalls(straddles);
-
-                        responseContent = DBHelper.Serialize(walls);
-                    }
                 }
                 #endregion
 
@@ -789,7 +775,7 @@ namespace MaxPainLambda
                     }
                     if (string.Equals(apiMethod, "detail"))
                     {
-                        responseContent = DBHelper.Serialize(await _awsContext.Hop.OrderByDescending(x => x.Id).ToListAsync());
+                        responseContent = DBHelper.Serialize(await _awsContext.Hop.AsNoTracking().OrderByDescending(x => x.Id).ToListAsync());
                     }
                     if (string.Equals(apiMethod, "summary"))
                     {
@@ -882,6 +868,19 @@ namespace MaxPainLambda
                 #region Python
                 if (string.Equals(controller, "python"))
                 {
+                    if (string.Equals(apiMethod, "daily"))
+                    {
+                        string? source = QueryValue<string?>(request, "source", false);
+                        string tickers = QueryValue<string>(request, "tickers");
+                        DateTime start = QueryValue<DateTime>(request, "startDate", false, DateTime.Now.AddDays(-30 * 4).ToString());
+                        DateTime end = QueryValue<DateTime>(request, "endDate", false);
+                        int numDays = QueryValue<int>(request, "numDays", false, "120");
+
+                        if (end == DateTime.MinValue) end = start.AddDays(numDays);
+
+                        responseContent = DBHelper.Serialize(await _controllerSvc.Daily(start, end, source, tickers));
+                    }
+
                     if (string.Equals(apiMethod, "cupwithhandlehistory"))
                     {
                         DateTime? midnight = QueryValue<DateTime?>(request, "midnight", false, DateTime.MinValue.ToString());
@@ -898,25 +897,34 @@ namespace MaxPainLambda
                     if (string.Equals(apiMethod, "getdailyscan"))
                     {
                         DateTime midnight = QueryValue<DateTime>(request, "midnight");
-                        responseContent = DBHelper.Serialize(await _homeContext.DailyScan(midnight));
+                        bool onlyWatch = QueryValue<bool>(request, "onlyWatch", false, "false");
+                        var list = await _homeContext.DailyScan(midnight);
+                        if (onlyWatch)
+                        {
+                            list = list.Where(x => x.WatchFlag == true).ToList();
+                        }
+                        responseContent = DBHelper.Serialize(list);
                     }
                     if (string.Equals(apiMethod, "adddailyscan"))
                     {
-                        string ticker = QueryValue<string>(request, "ticker");
-                        DBHelper.Serialize(await _homeContext.DailyScanAdd(ticker));
+                        string tickers = QueryValue<string>(request, "ticker");
+                        var list = tickers.Split(',');
+                        foreach (string ticker in list)
+                        {
+                            await _homeContext.DailyScanAdd(ticker);
+                        }
+
                         var midnight = await _homeContext.DailyScanMaxDate();
                         responseContent = DBHelper.Serialize(await _homeContext.DailyScan(midnight));
-                    }
-                    if (string.Equals(apiMethod, "dailymonitor"))
-                    {
-                        await _loggerSvc.InfoAsync("dailymonitor", "dailymonitor");
-                        responseContent = await _controllerSvc.DailyMonitor();
                     }
                     if (string.Equals(apiMethod, "dailyscanupdatewatch"))
                     {
                         int id = QueryValue<int>(request, "id");
                         bool flag = QueryValue<bool>(request, "flag");
-                        responseContent = DBHelper.Serialize(await _homeContext.DailyScanUpdateWatch(id, flag));
+                        await _homeContext.DailyScanUpdateWatch(id, flag);
+
+                        var midnight = await _homeContext.DailyScanMaxDate();
+                        responseContent = DBHelper.Serialize(await _homeContext.DailyScan(midnight));
                     }
                     if (string.Equals(apiMethod, "getmarketdirection"))
                     {
@@ -944,7 +952,7 @@ namespace MaxPainLambda
                 {
                     if (string.Equals(apiMethod, "mostactive"))
                     {
-                        List<MostActive> actives = await _homeContext.MostActive.ToListAsync();
+                        List<MostActive> actives = await _homeContext.MostActive.AsNoTracking().ToListAsync();
                         actives.ForEach(a => a.QueryType = a.GetQueryType());
                         responseContent = DBHelper.Serialize(actives);
                     }
@@ -956,7 +964,7 @@ namespace MaxPainLambda
                     }
                     if (string.Equals(apiMethod, "outsideoiwalls"))
                     {
-                        List<OutsideOIWalls>? walls = await _homeContext.OutsideOIWalls.ToListAsync();
+                        List<OutsideOIWalls>? walls = await _homeContext.OutsideOIWalls.AsNoTracking().ToListAsync();
                         responseContent = DBHelper.Serialize(walls);
                     }
                     if (string.Equals(apiMethod, "historicalmaxpain"))
@@ -974,6 +982,7 @@ namespace MaxPainLambda
                 {
                     if (string.Equals(apiMethod, "interval"))
                     {
+                        //await _loggerSvc.InfoAsync("interval", "interval");
                         await _controllerSvc.DailyMonitor();
                         responseContent = DateTime.UtcNow.ToString();
                     }
@@ -1066,7 +1075,25 @@ namespace MaxPainLambda
                     {
                         string msg = QueryValue<string>(request, "msg");
                         //responseContent = await _controllerSvc.SendMessageToMobileAsync("1", "4043086715", msg);
-                        responseContent = await _smsSvc.SendWhatsapp(msg);
+                        responseContent = await _smsSvc.SendTelegram(msg);
+                    }
+                }
+                #endregion
+
+                #region Token
+                if (string.Equals(controller, "token"))
+                {
+                    if (string.Equals(apiMethod, "schwab"))
+                    {
+                        string pw = QueryValue<string>(request, "pw", false);
+                        if (!string.Equals(pw, "6#10oz"))
+                        {
+                            return ReturnError(404, "Not Found");
+                        }
+
+                        string json = await _configurationSvc.Get("SchwabTokens");
+                        ScwToken? token = DBHelper.Deserialize<ScwToken>(json);
+                        responseContent = DBHelper.Serialize(token);
                     }
                 }
                 #endregion
@@ -1185,78 +1212,72 @@ namespace MaxPainLambda
 
         private T FormValue<T>(NameValueCollection formData, string key, bool raiseError = true, string? defaultValue = null)
         {
-            string? content = null;
-            if (formData != null && formData.AllKeys.Contains(key)) content = formData[key];
-            if (string.Compare(content, "null", true) == 0) content = null;
-            if (content == null && defaultValue != null) content = defaultValue;
-            if (raiseError && content == null) throw new ArgumentException($"missing form data \"{key}\"");
+            var content = formData?[key];
+            if (string.Equals(content, "null", StringComparison.OrdinalIgnoreCase)) content = null;
+            content ??= defaultValue;
 
-            if (!string.IsNullOrEmpty(content) && string.Compare(key, "ticker", true) == 0)
+            if (raiseError && content == null)
+                throw new ArgumentException($"Missing form data: {key}");
+
+            if (!string.IsNullOrEmpty(content))
             {
-                content = SwapTicker(content);
-            }
-
-            if (string.Compare(key, "json", true) == 0 && !content.StartsWith('{'))
-            {
-                // for some reason base64 contains empty spaces
-                StringBuilder sb = new StringBuilder(content);
-                sb.Replace(" ", "+");
-
-                // decode the application/x-www-form-urlencoded value
-                byte[] buffer = Convert.FromBase64String(sb.ToString());
-
-                // unzip the value
-                string unzipped = ReadGZip(buffer);
-
-                // remove first and last double quote
-                // unescape new line
-                // unescape quotes
-                sb = new StringBuilder(unzipped.Substring(1, unzipped.Length - 2));
-                sb.Replace("\\n", string.Empty);
-                sb.Replace("\\", string.Empty);
-                content = sb.ToString();
-                //await _loggerSvc.InfoAsync($"decomp json {request.RequestContext?.Http?.Path?}", content);
+                if (string.Equals(key, "ticker", StringComparison.OrdinalIgnoreCase))
+                    content = SwapTicker(content);
+                else if (string.Equals(key, "json", StringComparison.OrdinalIgnoreCase) && !content.StartsWith('{'))
+                    content = ProcessJsonContent(content);
             }
 
             return ChangeType<T>(content);
         }
+
+        private string ProcessJsonContent(string content)
+        {
+            var cleanContent = content.Replace(" ", "+");
+            var buffer = Convert.FromBase64String(cleanContent);
+            var unzipped = ReadGZip(buffer);
+
+            if (unzipped.Length < 2) return unzipped;
+
+            return unzipped.Substring(1, unzipped.Length - 2)
+                .Replace("\\n", string.Empty)
+                .Replace("\\", string.Empty);
+        }
+
 
         private T QueryValue<T>(APIGatewayHttpApiV2ProxyRequest request, string key, bool raiseError = true, string? defaultValue = null)
         {
             string? content = null;
             if (request.QueryStringParameters != null && request.QueryStringParameters.ContainsKey(key)) content = request.QueryStringParameters?[key];
-            if (string.Compare(content, "null", true) == 0) content = null;
-            if (string.IsNullOrEmpty(content) && defaultValue != null) content = defaultValue;
-            if (raiseError && content == null) throw new ArgumentException($"missing querystring parameter \"{key}\"");
+            if (string.Equals(content, "null", StringComparison.OrdinalIgnoreCase)) content = null;
+            if (string.IsNullOrEmpty(content)) content = defaultValue;
 
-            if (!string.IsNullOrEmpty(content) && string.Compare(key, "ticker", true) == 0)
-            {
+            if (raiseError && content == null)
+                throw new ArgumentException($"Missing query parameter: {key}");
+
+            if (!string.IsNullOrEmpty(content) && string.Equals(key, "ticker", StringComparison.OrdinalIgnoreCase))
                 content = SwapTicker(content);
-            }
 
             return ChangeType<T>(content);
         }
 
-        private T ChangeType<T>(string? content)
+        private static T ChangeType<T>(string? content)
         {
-            if (content == null) return default(T);
-            Type t = typeof(T);
-            if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
-            {
-                t = Nullable.GetUnderlyingType(t);
-            }
-            return (T)Convert.ChangeType(content, t);
+            if (content == null) return default(T)!;
+
+            var targetType = typeof(T);
+            if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                targetType = Nullable.GetUnderlyingType(targetType)!;
+
+            return (T)Convert.ChangeType(content, targetType);
         }
 
         private string ParseUrlParameter(APIGatewayHttpApiV2ProxyRequest request)
         {
-            string? path = request.RequestContext.Http.Path.ToLower();
-            string[] pathArray = path.Split('/');
+            var path = request.RequestContext?.Http?.Path;
+            if (string.IsNullOrEmpty(path)) return string.Empty;
 
-            string content = pathArray[pathArray.Length - 1];
-            content = SwapTicker(content);
-
-            return content;
+            var lastSegment = path.Split('/', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
+            return SwapTicker(lastSegment);
         }
 
         private APIGatewayHttpApiV2ProxyResponse ReturnRedirect(string url)

@@ -71,15 +71,8 @@ namespace MaxPainAPI.Controllers
 
                 _finImport.UseMessage = true;
                 _finImport.IsDebug = debug;
-                _finImport.ImportDateUTC = utc;
 
                 string log = await _finImport.RunImport();
-
-                /*
-				DateTime utc = DateTime.UtcNow;
-				DateTime est = Utility.GMTToEST(utc);
-				int currentTime = Convert.ToInt32(est.ToString("HHmm"));
-				*/
 
                 if (sendEmail && _finImport.IsMarketOpen)
                 {
@@ -133,7 +126,6 @@ namespace MaxPainAPI.Controllers
         {
             _finImport.IsDebug = debug;
             _finImport.UseMessage = saveMessage;
-            _finImport.ImportDateUTC = utc;
 
             if (!string.IsNullOrEmpty(tickersCSV)) _finImport.TickersCSV = tickersCSV;
 
@@ -262,23 +254,11 @@ namespace MaxPainAPI.Controllers
         }
 
         [HttpGet("RebuildPains")]
-        // http://maximum-pain.com/api/finimport/RebuildPains?begin=1/1/2020&end=12/31/22
         public async Task<JsonResult> RebuildPains(DateTime begin, DateTime end, string pw)
         {
             List<Mx> pains = await _finImport.RebuildPains(begin, end);
             return Json(pains);
         }
-
-        /*
-		[HttpGet("PythonData")]
-		public async Task<JsonResult> PythonData(DateTime currentDate)
-		{
-			//ImportMaxPainXml mpx = await _homeContext.ImportMaxPainXml.Where>(x => x.CreatedOn == currentDate);
-			//return Json(mpx);
-
-			//List<StockTicker> tickers = _awsContext.StockTicker.ToList();
-		}
-		*/
 
         [HttpGet("PatchVolume")]
         public async Task<JsonResult> PatchVolume(DateTime importDate, string ticker, string pw)
@@ -345,6 +325,21 @@ namespace MaxPainAPI.Controllers
             List<OutsideOIWalls> walls = await _finImport.OutsideOIWalls(straddles);
 
             return Json(walls);
+        }
+
+        [HttpGet("Daily")]
+        public async Task<JsonResult> Daily(DateTime? start, DateTime? end, string? source, string? ticker)
+        {
+            if (!end.HasValue)
+            {
+                end = DateTime.Now;
+            }
+            if (!start.HasValue)
+            {
+                start = end.Value.AddDays(-4 * 30);
+            }
+
+            return Json(await _controller.Daily(start.Value, end.Value, source, ticker));
         }
     }
 }

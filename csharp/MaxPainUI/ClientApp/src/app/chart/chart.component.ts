@@ -2,15 +2,15 @@
 // https://www.codexworld.com/make-responsive-pie-chart-with-google-charts/
 
 import { AfterViewInit, OnInit, Renderer2, Input, Component, ElementRef, ViewChild, SimpleChanges } from '@angular/core';
-import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
+import { FormGroup, FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
 import { takeUntil, switchMap, tap, map } from 'rxjs/operators'
+import { CommonModule } from '@angular/common';
 
 import { DataService } from '../services/data.service';
 import { UtilsService } from '../services/utils.service';
 import { Ticker } from "../models/ticker";
-import { MPChn } from "../models/MaxPainItem";
 import { ChartInfo } from "../models/chart-info";
 import { ThemeService } from '../services/theme.service';
 
@@ -18,6 +18,8 @@ declare var google: any;
 
 @Component( {
   selector: 'app-chart',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './chart.component.html',
   styleUrls: ['./chart.component.scss'],
   host: {
@@ -32,7 +34,7 @@ export class ChartComponent implements OnInit, AfterViewInit {
   @Input() key: string;
   @Input() degree: number;
 
-  public chartForm: FormGroup;
+  public chartForm: FormGroup = new FormGroup({})
   public chartInfo: ChartInfo;
   public containerWidth: number;
   public useMaterialChart: boolean = false;
@@ -105,7 +107,7 @@ export class ChartComponent implements OnInit, AfterViewInit {
       explorer: {
         axis: 'horizontal',
         keepInBounds: true,
-        maxZoomIn: 6.0
+        maxZoomIn: 10.0
       },
     };
     //console.log(options);
@@ -144,6 +146,8 @@ export class ChartComponent implements OnInit, AfterViewInit {
     private data: DataService,
     private utils: UtilsService,
   ) {
+    this.createForm(); // initialize form before template binding (SSR safe)
+
   }
 
 
@@ -188,9 +192,7 @@ export class ChartComponent implements OnInit, AfterViewInit {
     })
   }
 
-  ngAfterViewInit() {
-    //this.containerWidth = this.myChart.nativeElement.offsetWidth;
-    //this.isLoading = true;
+  ngAfterViewInit(): void {
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -268,6 +270,11 @@ export class ChartComponent implements OnInit, AfterViewInit {
   }
 
   initializeChart(): void {
+    if (!this.myChart?.nativeElement) return;
+    if (typeof google === 'undefined' || !google.charts) {
+      setTimeout(() => this.initializeChart(), 100);
+      return;
+    }
     if (this.chartInfo.chartType == "stackedcolumn") this.useMaterialChart = false;
 
     if (this.useMaterialChart) {

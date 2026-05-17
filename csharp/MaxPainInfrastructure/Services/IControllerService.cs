@@ -22,5 +22,8 @@ namespace MaxPainInfrastructure.Services
         #endregion
 
         public Task<string> DailyMonitor();
+
+        public Task<List<Daily>> Daily(DateTime start, DateTime end, string? source, string? tickers);
+
     }
 }

@@ -11,7 +11,7 @@ namespace MaxPainInfrastructure.Models
         public string Source { get; set; }
 
         [XmlAttribute]
-        public string Stock { get; set; }
+        public string Stock { get; set; } = string.Empty;
 
         [XmlAttribute]
         public decimal StockPrice { get; set; }
@@ -46,10 +46,10 @@ namespace MaxPainInfrastructure.Models
     public class Opt
     {
         [XmlAttribute]
-        public string ot { get; set; }
+        public string ot { get; set; } = string.Empty;
 
         [XmlAttribute]
-        public string d { get; set; }
+        public string d { get; set; } = string.Empty;
 
         [XmlAttribute]
         public decimal p { get; set; }
@@ -68,7 +68,6 @@ namespace MaxPainInfrastructure.Models
 
         [XmlAttribute]
         public int v { get; set; }
-
 
         [XmlAttribute]
         public float iv { get; set; }
@@ -148,6 +147,7 @@ namespace MaxPainInfrastructure.Models
             this.a = Convert.ToDecimal(ask);
             this.oi = openInterest;
             this.v = volume;
+            this.d = modifiedOn.ToString("yyyy-MM-dd HH:mm:ss");
         }
         #endregion
     }

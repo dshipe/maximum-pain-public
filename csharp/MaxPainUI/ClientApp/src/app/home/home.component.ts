@@ -1,4 +1,5 @@
-import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges } from '@angular/core';
+import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
@@ -7,6 +8,7 @@ import { Title } from "@angular/platform-browser";
 
 import { DataService } from '../services/data.service';
 import { UtilsService } from '../services/utils.service';
+import { SeoService } from '../services/seo.service';
 import { BlogEntry } from "../models/blog-entry";
 
 @Component( {
@@ -22,7 +24,9 @@ export class HomeComponent {
     private actRoute: ActivatedRoute,
     private route: Router,
     private utils: UtilsService,
-    private title: Title) {
+    private title: Title,
+    private seo: SeoService,
+    @Inject(PLATFORM_ID) private platformId: Object) {
 
     // override the route reuse strategy
     this.route.routeReuseStrategy.shouldReuseRoute = function () {
@@ -31,7 +35,14 @@ export class HomeComponent {
   }
 	
   ngOnInit() {
-    //this.title.setTitle("Blog");
+    this.seo.updateMetaTags({
+      title: "Stock Option Max Pain Calculator — Real-Time Open Interest Analysis",
+      description: "Free max pain calculator for stocks and ETFs. See where options traders expect prices to close at expiration. Real-time open interest data for SPY, QQQ, AAPL, TSLA, NVDA and 500+ tickers.",
+      keywords: "max pain calculator, stock options, open interest, options analysis, max pain theory, options trading, SPY max pain, QQQ max pain",
+      url: "https://maximum-pain.com"
+    });
+
+    if (!isPlatformBrowser(this.platformId)) { return; }
     
     let observable$: Observable<Array<BlogEntry>> =
       this.data.getBlogEntries();

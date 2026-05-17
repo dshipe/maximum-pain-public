@@ -1,5 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
@@ -48,6 +49,9 @@ import { CupWithHandleComponent } from './cup-with-handle/cup-with-handle.compon
 import { DailyScanComponent } from './daily-scan/daily-scan.component';
 import { MarketDirectionComponent } from './market-direction/market-direction.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
+import { ChartcandleComponent } from './chartcandle/chartcandle.component';
+import { CandlestickComponent } from './candlestick/candlestick.component';
+import { GlossaryComponent } from './glossary/glossary.component';
 
 
 @NgModule({
@@ -59,7 +63,6 @@ import { SidebarComponent } from './sidebar/sidebar.component';
     MaxpainComponent,
     OptionsComponent,
     StackedComponent,
-    ChartComponent,
     ScreenerComponent,
     ScreenerChildComponent,
     ContactComponent,
@@ -87,57 +90,67 @@ import { SidebarComponent } from './sidebar/sidebar.component';
     CupWithHandleComponent,
     DailyScanComponent,
     MarketDirectionComponent,
-    SidebarComponent
+    SidebarComponent,
+    ChartcandleComponent,
+    CandlestickComponent,
+    GlossaryComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
+    CommonModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
+    ChartComponent,
   	AdsenseModule.forRoot(),
     RouterModule.forRoot([
-    { path: '', component: HomeComponent, data: { title: 'Stock Option Max Pain' }, pathMatch: 'full' },
-    { path: 'cup-with-handle', component: CupWithHandleComponent },
-    { path: 'daily-scan', component: DailyScanComponent },
-    { path: 'market-direction', component: MarketDirectionComponent },
-    { path: 'options', component: OptionsComponent },
-    { path: 'options/:id', component: OptionsComponent },
-    { path: 'stock-options', component: OptionsComponent },
-    { path: 'stock-options-maximum-pain', component: OptionsComponent },
-    { path: 'stacked', component: StackedComponent },
-    { path: 'stacked/:id', component: StackedComponent },
-    { path: 'max-pain.aspx', component: OptionsComponent },
-    { path: 'greeks', component: GreeksComponent },
-    { path: 'greeks/:id', component: GreeksComponent },
-    { path: 'iv', component: IvComponent },
-    { path: 'iv/:id', component: IvComponent },
-    { path: 'history', component: HistoryComponent },
-    { path: 'history/:id', component: HistoryComponent },
-    { path: 'maxpain-history', component: MaxpainHistoryComponent },
-    { path: 'maxpain-history/:id', component: MaxpainHistoryComponent },
-    { path: 'spreads', component: SpreadComponent },
-    { path: 'spreads/:id', component: SpreadComponent },
-    { path: 'screener/:id', component: ScreenerComponent },
-    { path: 'screenerMaxPain', component: ScreenerMaxPainComponent },
-    { path: 'outside-oi-walls', component: OutsideoiwallsComponent },
-    { path: 'contact', component: ContactComponent },
-    { path: 'blog', component: BloghomeComponent },
-    { path: 'blog/archive/:id', component: BlogComponent },
-    { path: 'scheduled-task', component: ScheduledTaskComponent, data: { title: 'Scheduled Task - Stock Option Max Pain' } },
-    { path: 'download-csv', component: DownloadCsvComponent, data: { title: 'Download CSV - Stock Option Max Pain' } },
-    { path: 'download-csv/:id', component: DownloadCsvComponent, data: { title: 'Download CSV - Stock Option Max Pain' } },
-    { path: 'not-found', component: NotFoundComponent },
-    { path: 'admin/blogmanager', component: BlogmanagerComponent },
-    { path: 'admin/email-stat', component: EmailStatComponent, data: { title: 'Email - Stock Option Max Pain' } },
-    { path: 'admin/import', component: ImportComponent },
-    { path: 'admin/import-log', component: ImportLogComponent },
-    { path: 'admin/message', component: MessageComponent, data: { title: 'Message - Stock Option Max Pain' } },
-    { path: 'admin/hop', component: HopComponent, data: { title: 'Hop - Stock Option Max Pain' } },
-    { path: 'admin/usertweets', component: UserTweetsComponent, data: { title: 'User Tweets - Stock Option Max Pain' } },
-    { path: '**', redirectTo: 'not-found' },
-], { relativeLinkResolution: 'legacy' })
+      { path: '', component: HomeComponent, data: { title: 'Stock Option Max Pain' }, pathMatch: 'full' },
+      { path: 'cup-with-handle', component: CupWithHandleComponent },
+      { path: 'daily-scan', component: DailyScanComponent },
+      { path: 'market-direction', component: MarketDirectionComponent },
+      { path: 'candlestick', component: CandlestickComponent },
+      { path: 'candlestick/:id', component: CandlestickComponent },
+      { path: 'options', component: OptionsComponent },
+      { path: 'options/:id', component: OptionsComponent },
+      { path: 'stock-options', component: OptionsComponent },
+      { path: 'stock-options-maximum-pain', component: OptionsComponent },
+      { path: 'stacked', component: StackedComponent },
+      { path: 'stacked/:id', component: StackedComponent },
+      { path: 'max-pain.aspx', component: OptionsComponent },
+      { path: 'greeks', component: GreeksComponent },
+      { path: 'greeks/:id', component: GreeksComponent },
+      { path: 'iv', component: IvComponent },
+      { path: 'iv/:id', component: IvComponent },
+      { path: 'history', component: HistoryComponent },
+      { path: 'history/:id', component: HistoryComponent },
+      { path: 'maxpain-history', component: MaxpainHistoryComponent },
+      { path: 'maxpain-history/:id', component: MaxpainHistoryComponent },
+      { path: 'spreads', component: SpreadComponent },
+      { path: 'spreads/:id', component: SpreadComponent },
+      { path: 'screener/:id', component: ScreenerComponent },
+      { path: 'screenerMaxPain', component: ScreenerMaxPainComponent },
+      { path: 'outside-oi-walls', component: OutsideoiwallsComponent },
+      { path: 'contact', component: ContactComponent },
+      { path: 'blog', component: BloghomeComponent },
+      { path: 'blog/archive/:id', component: BlogComponent },
+      { path: 'scheduled-task', component: ScheduledTaskComponent, data: { title: 'Scheduled Task - Stock Option Max Pain' } },
+      { path: 'download-csv', component: DownloadCsvComponent, data: { title: 'Download CSV - Stock Option Max Pain' } },
+      { path: 'download-csv/:id', component: DownloadCsvComponent, data: { title: 'Download CSV - Stock Option Max Pain' } },
+      { path: 'not-found', component: NotFoundComponent },
+      { path: 'admin/blogmanager', component: BlogmanagerComponent },
+      { path: 'admin/email-stat', component: EmailStatComponent, data: { title: 'Email - Stock Option Max Pain' } },
+      { path: 'admin/import', component: ImportComponent },
+      { path: 'admin/import-log', component: ImportLogComponent },
+      { path: 'admin/message', component: MessageComponent, data: { title: 'Message - Stock Option Max Pain' } },
+      { path: 'admin/hop', component: HopComponent, data: { title: 'Hop - Stock Option Max Pain' } },
+      { path: 'admin/usertweets', component: UserTweetsComponent, data: { title: 'User Tweets - Stock Option Max Pain' } },
+      { path: 'glossary', component: GlossaryComponent },
+      { path: '**', redirectTo: 'not-found' },
+    ], {})
   ],
-  providers: [DataService, UtilsService, StateService], 
+  exports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
+  providers: [DataService, UtilsService, StateService],
+  schemas: [NO_ERRORS_SCHEMA],
   bootstrap: [AppComponent]
 })
 

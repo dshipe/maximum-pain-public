@@ -8,6 +8,7 @@
   "profile": "default",
   "region": "us-east-1",
   "configuration": "Release",
+  "msbuild-parameters": "--self-contained false -p:PublishReadyToRun=false --runtime linux-x64",
   "s3-prefix": "MaxPainLambda/",
   "template": "serverless.template",
   "template-parameters": ""

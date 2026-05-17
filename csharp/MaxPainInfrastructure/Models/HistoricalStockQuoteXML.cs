@@ -4,6 +4,6 @@
     {
         public long ID { get; set; }
         public DateTime? CreatedOn { get; set; }
-        public string Content { get; set; }
+        public string? Content { get; set; }
     }
 }

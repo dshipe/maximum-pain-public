@@ -43,15 +43,5 @@ namespace MaxPainInfrastructure.Services
         #region Stacked
         public ChartInfo Stacked(SdlChn sc, string title, string key, bool isPut);
         #endregion
-
-
-        #region Images
-        public Task<byte[]> FetchImage(string route, string ticker, DateTime maturity);
-
-        public Task<byte[]> FetchImage(ChartInfo info);
-
-        public Task<byte[]> PostURI(string url, string payload);
-        #endregion
-
     }
 }

@@ -6,9 +6,9 @@ namespace MaxPainInfrastructure.Models
     public class Mx
     {
         [XmlAttribute]
-        public string t { get; set; }
+        public string t { get; set; } = string.Empty;
         [XmlAttribute]
-        public string m { get; set; }
+        public string m { get; set; } = string.Empty;
         [XmlAttribute]
         public decimal sp { get; set; }
         [XmlAttribute]
@@ -58,6 +58,6 @@ namespace MaxPainInfrastructure.Models
     {
         public long ID { get; set; }
         public DateTime? CreatedOn { get; set; }
-        public string Content { get; set; }
+        public string? Content { get; set; }
     }
 }

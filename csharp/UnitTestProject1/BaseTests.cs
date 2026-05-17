@@ -1,6 +1,6 @@
 ﻿using MaxPainInfrastructure.Models;
 using MaxPainInfrastructure.Services;
-using MaxPainLambda;
+//using MaxPainLambda;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -24,7 +24,7 @@ namespace UnitTestProject1
         protected IEmailService EmailSvc { get; set; }
         protected IFinDataService FinDataSvc { get; set; }
         protected IFinImportService FinImportSvc { get; set; }
-        protected ILambdaService LambdaSvc { get; set; }
+        //protected ILambdaService LambdaSvc { get; set; }
         protected ILoggerService LoggerSvc { get; set; }
         protected IMailerLiteService MailerLiteSvc { get; set; }
         protected ISchwabService SchwabSvc { get; set; }
@@ -36,21 +36,16 @@ namespace UnitTestProject1
 
         public BaseTests()
         {
-            var secretService = new SecretService();
-
             var config = new Config();
             var ConnectionStringsConfig = new Options<ConnectionStrings>(config.Get<ConnectionStrings>());
 
             var optionsBuilder = new DbContextOptionsBuilder<AwsContext>();
-            string AWSConnection = secretService.GetValue("CONNSTR_AWS").Result;
-            optionsBuilder.UseSqlServer(AWSConnection);
+            optionsBuilder.UseSqlServer(ConnectionStringsConfig.Value.AWSConnection);
             _awsContext = new AwsContext(optionsBuilder.Options);
 
             var optionsBuilder2 = new DbContextOptionsBuilder<HomeContext>();
-            string HomeConnection = secretService.GetValue("CONNSTR_HOME").Result;
-            optionsBuilder2.UseSqlServer(HomeConnection);
+            optionsBuilder2.UseSqlServer(ConnectionStringsConfig.Value.HomeConnection);
             _homeContext = new HomeContext(optionsBuilder2.Options);
-
 
             IConfiguration configuration =
                 new ConfigurationBuilder()
@@ -68,14 +63,14 @@ namespace UnitTestProject1
             SchwabSvc = new SchwabService(LoggerSvc, SecretSvc);
 
             FinDataSvc = new FinDataService(_awsContext, ConfigurationSvc, LoggerSvc, CalculationSvc, SchwabSvc, SecretSvc);
-            FinImportSvc = new FinImportService(_awsContext, _homeContext, LoggerSvc, ConfigurationSvc, CalculationSvc, FinDataSvc, HistorySvc);
+            FinImportSvc = new FinImportService(_awsContext, _homeContext, LoggerSvc, ConfigurationSvc, CalculationSvc, EmailSvc, FinDataSvc, HistorySvc, SecretSvc, null);
 
             MailerLiteSvc = new MailerLiteService(SecretSvc, LoggerSvc);
             EmailSvc = new EmailService(_awsContext, _homeContext, LoggerSvc, CalculationSvc, ChartSvc, ConfigurationSvc, FinDataSvc, HistorySvc, MailerLiteSvc, SecretSvc, UrlShortSvc);
 
             SMSSvc = new SMSService(SecretSvc);
             ControllerSvc = new ControllerService(_awsContext, _homeContext, LoggerSvc, CalculationSvc, ChartSvc, ConfigurationSvc, EmailSvc, FinDataSvc, FinImportSvc, HistorySvc, SecretSvc, SMSSvc);
-            LambdaSvc = new LambdaService(_awsContext, _homeContext, LoggerSvc, CalculationSvc, ChartSvc, ConfigurationSvc, ControllerSvc, EmailSvc, FinDataSvc, FinImportSvc, HistorySvc, SchwabSvc, SecretSvc, SMSSvc);
+            //LambdaSvc = new LambdaService(_awsContext, _homeContext, LoggerSvc, CalculationSvc, ChartSvc, ConfigurationSvc, ControllerSvc, EmailSvc, FinDataSvc, FinImportSvc, HistorySvc, SchwabSvc, SecretSvc, SMSSvc);
 
         }
 

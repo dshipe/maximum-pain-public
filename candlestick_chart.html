@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body>
+    <div id="candlestick_chart" style="width: 900px; height: 500px;"></div>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+        
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable([["Date", "Low", "Open", "Close", "High"], ["2024-01-01", 95, 100, 105, 110], ["2024-01-02", 100, 105, 110, 115], ["2024-01-03", 105, 110, 115, 120]]);
+            
+            var options = {
+                title: 'Candlestick Chart',
+                legend: 'none'
+            };
+            
+            var chart = new google.visualization.CandlestickChart(document.getElementById('candlestick_chart'));
+            chart.draw(data, options);
+        }
+    </script>
+</body>
+</html>

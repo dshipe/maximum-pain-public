@@ -1,4 +1,5 @@
-﻿using MaxPainInfrastructure.Code;
+﻿using MaxPainChart;
+using MaxPainInfrastructure.Code;
 using MaxPainInfrastructure.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -43,7 +44,7 @@ namespace UnitTestProject1
             outputFile = string.Format(@"{0}\json\ChartInfo-ChartHistory.json", Directory.GetCurrentDirectory());
             File.WriteAllText(outputFile, DBHelper.Serialize(info));
 
-            byte[] buffer = ChartSvc.FetchImage(info).Result;
+            byte[] buffer = ChartHelper.RenderChart(info);
             TestHelper.OpenImageBytes(buffer);
 
             Assert.AreNotEqual(0, sc.Straddles.Count);

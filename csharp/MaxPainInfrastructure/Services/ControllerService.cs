@@ -2,9 +2,9 @@
 using MaxPainInfrastructure.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
 using System.Data;
 using System.Xml;
+using Twilio.TwiML.Voice;
 
 namespace MaxPainInfrastructure.Services
 {
@@ -120,7 +120,7 @@ namespace MaxPainInfrastructure.Services
             }
             catch (Exception ex)
             {
-                await _logger.InfoAsync("SheduledTask Twitter ERROR", ex.ToString());
+                await _logger.InfoAsync("ScheduledTask Twitter ERROR", ex.ToString());
                 result.Add("SheduledTask Twitter ERROR");
                 result.Add(ex.ToString());
             }
@@ -132,7 +132,7 @@ namespace MaxPainInfrastructure.Services
             }
             catch (Exception ex)
             {
-                await _logger.InfoAsync("SheduledTask HealthCheck ERROR", ex.ToString());
+                await _logger.InfoAsync("ScheduledTask HealthCheck ERROR", ex.ToString());
                 result.Add("SheduledTask HealthCheck ERROR");
                 result.Add(ex.ToString());
             }
@@ -211,7 +211,7 @@ namespace MaxPainInfrastructure.Services
             {
                 DateTime expected = ExpectedOptionDate(Utility.CurrentDateEST());
 
-                string sql = "SELECT [Date] FROM vwHistoryRecent WITH(NOLOCK)";
+                string sql = "SELECT MAX(CreatedOn) AS CreatedOn, dateadd(dd,0, datediff(dd,0,MAX(CreatedOn)))  AS [Date] FROM HistoricalOptionQuote WITH(NOLOCK)";
                 DateTime actual = Convert.ToDateTime(await _homeContext.FetchScalar(sql, null, "Date"));
 
                 errorTest = (actual == expected.Date) ? false : true;
@@ -295,57 +295,73 @@ namespace MaxPainInfrastructure.Services
 
         public async Task<string> DailyMonitor()
         {
-            //USE Python
-            //GO
-            //ALTER TABLE DailyResult ADD HasAlerted BIT
+            List<DailyScan> alertList = new List<DailyScan>();
 
             string sql = @"
-                SELECT Id, Ticker, CreatedOn
+                SELECT Id, Ticker, CreatedOn, ADR, (ADR / Price * 100) AS ADRPercent 
                 FROM Python..DailyResult WITH(NOLOCK)
                 WHERE ISNULL(HasAlerted,0) = 0
-                AND WatchFlag = 1
+                AND WatchFlag  = 1
                 AND CreatedOn > (
                     SELECT CONVERT(VARCHAR, MAX(CreatedOn), 101) 
                     FROM Python..DailyResult WITH(NOLOCK)
                 )
             ";
 
-            string json = await _awsContext.FetchJson(sql, null, 30);
-            JArray jArray = JArray.Parse(json);
-
-            List<string> tickers = new List<string>();
-            if (jArray.Count > 0)
+            // alert on daily scan
+            List<DailyScan> scans = await _awsContext.FetchModel<DailyScan>(sql, null, 30);
+            if (scans.Count > 0)
             {
-                foreach (JObject item in jArray)
-                {
-                    tickers.Add(item.GetValue("Ticker").ToString());
-                }
-            }
+                List<string> tickers = scans.Select(x => x.Ticker).ToList();
+                List<Stock> stocks = await _finData.FetchStock(string.Join(",", tickers));
 
-            List<DailyStock> dailies = new List<DailyStock>();
-            if (tickers.Count > 0)
-            {
-                List<Stock> quotes = await _finData.FetchStock(string.Join(",", tickers));
-                foreach (Stock stk in quotes)
+                if (stocks != null)
                 {
-                    json = DBHelper.Serialize(stk.quote);
-                    DailyStock ds = DBHelper.Deserialize<DailyStock>(json);
-                    ds.Ticker = stk.symbol;
-
-                    if (ds.NetPercentChange > 2)
+                    foreach (DailyScan scan in scans)
                     {
-                        dailies.Add(ds);
+                        var stock = stocks.Where(x => x.symbol == scan.Ticker.ToUpper()).FirstOrDefault();
+                        if (stock != null)
+                        {
+                            scan.NetPercentChange = stock.quote.netPercentChange;
+                            scan.MarkPercentChange = stock.quote.markPercentChange;
+
+                            if (scan.NetPercentChange > scan.ADRPercent / 2 || scan.NetPercentChange > 4)
+                            {
+                                alertList.Add(scan);
+                            }
+                        }
                     }
                 }
             }
 
-            if (dailies.Count > 0)
+            // alert on index
+            List<string> tickers2 = new List<string>() { "^GSPC", "^DJI", "^IXIC" };
+            List<Stock> stocks2 = await _finData.FetchStock(string.Join(",", tickers2));
+            foreach(Stock stock in stocks2)
+            {
+                if (stock.quote.netPercentChange > 2)
+                {
+                    await _homeContext.DailyScanAdd(stock.symbol);
+
+                    DailyScan scan = new DailyScan()
+                    {
+                        Ticker = stock.symbol,
+                        NetPercentChange = stock.quote.netPercentChange,
+                        ADRPercent = 0
+                    };
+                    alertList.Add(scan);
+                }
+            }
+
+            if (alertList.Count > 0)
             {
                 string content = string.Empty;
-                string csv = String.Join(",", dailies.Select(x => x.Ticker).ToArray());
-                foreach (DailyStock ds in dailies)
+                string csv = String.Join(",", alertList.Select(x => x.Ticker).ToArray());
+                foreach (DailyScan scan in alertList)
                 {
-                    content = $"{content} {ds.Ticker} {ds.NetPercentChange}\r\n";
+                    //var watch = scan.WatchFlag.Value ? " WATCH" : string.Empty;
+                    var watch = string.Empty;
+                    content = $"{content} {scan.Ticker} {Math.Round(scan.NetPercentChange, 3)}{watch}\r\n";
                 }
 
                 await _logger.InfoAsync("ControllerService DailyMonitor send alert", content);
@@ -363,23 +379,76 @@ namespace MaxPainInfrastructure.Services
                 parameters.Add(new SqlParameter("TickerCSV", csv));
                 await _awsContext.Execute(sql, parameters, 30);
 
-                await _sms.SendWhatsapp(content);
+                await _sms.SendTelegram(content);
             }
 
-            return DBHelper.Serialize(dailies);
+            return DBHelper.Serialize(alertList);
         }
-    }
+
+        public async Task<List<Daily>> Daily(DateTime start, DateTime end, string? source, string? tickers)
+        {
+            var sql = @"
+                SELECT 
+	                Ticker
+	                ,[Source]
+	                ,[Date]
+	                ,[Open]
+	                ,[High]
+	                ,[Low]
+	                ,[Close]
+	                ,[AdjClose]
+	                ,[Volume]
+	                ,ROUND(AVG([Close]) OVER (
+                        ORDER BY [Date]
+                        ROWS BETWEEN 9 PRECEDING AND CURRENT ROW
+                    ),2) AS SMA10
+	                ,ROUND(AVG([Close]) OVER (
+                        ORDER BY [Date]
+                        ROWS BETWEEN 19 PRECEDING AND CURRENT ROW
+                    ),2) AS SMA20
+	                ,ROUND(AVG([Volume]) OVER (
+                        ORDER BY [Date]
+                        ROWS BETWEEN 19 PRECEDING AND CURRENT ROW
+                    ),2) AS Volume20
+                FROM Python..vwDaily 
+                WHERE [Date] BETWEEN @Start AND @End    
+            ";
 
 
-    public class DailyStock
-    {
-        public string Ticker { get; set; }
-        //public Decimal AskPrice { get; set; }
-        //public Decimal BidPrice { get; set; }
-        public Decimal OpenPrice { get; set; }
-        public Decimal LastPrice { get; set; }
-        public Decimal MarkPercentChange { get; set; }
-        public Decimal NetPercentChange { get; set; }
-        public Int64 TotalVolume { get; set; }
+            var parameters = new List<SqlParameter>
+            {
+                new SqlParameter("Start", start),
+                new SqlParameter("End", end)
+            };
+
+            if (!string.IsNullOrEmpty(tickers))
+            {
+                parameters.Add(new SqlParameter("Tickers", tickers));
+                sql = string.Concat(sql, " AND Ticker IN (@Tickers) ORDER BY [Date]");
+                return await _awsContext.FetchModel<Daily>(sql, parameters, 30);
+            }
+
+            if (!string.IsNullOrEmpty(source))
+            {
+                parameters.Add(new SqlParameter("Source", source));
+                sql = string.Concat(sql, " AND Source = @Source ORDER BY [Date]");
+                return await _awsContext.FetchModel<Daily>(sql, parameters, 30);
+            }
+
+            sql = string.Concat(sql, " ORDER BY [Date]");
+            return await _awsContext.FetchModel<Daily>(sql, null, 30);
+        }
+
+        public static T[] ConcatArrays<T>(params T[][] p)
+        {
+            var position = 0;
+            var outputArray = new T[p.Sum(a => a.Length)];
+            foreach (var curr in p)
+            {
+                Array.Copy(curr, 0, outputArray, position, curr.Length);
+                position += curr.Length;
+            }
+            return outputArray;
+        }
     }
 }

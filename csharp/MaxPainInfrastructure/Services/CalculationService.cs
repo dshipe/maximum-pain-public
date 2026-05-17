@@ -7,10 +7,12 @@ namespace MaxPainInfrastructure.Services
 {
     public class CalculationService : ICalculationService
     {
+        private static readonly Regex CallToPutRegex = new(@"([A-Z]+)(\d{6})C", RegexOptions.Compiled);
+        private static readonly Regex PutToCallRegex = new(@"([A-Z]+)(\d{6})P", RegexOptions.Compiled);
+
         public string FlipOptionTicker(string content, string srch, string repl)
         {
-            string pattern = string.Concat(@"([A-Z]+)(\d{6})", srch);
-            return Regex.Replace(content, pattern, string.Concat("$1$2", repl));
+            return srch == "C" ? CallToPutRegex.Replace(content, "$1$2P") : PutToCallRegex.Replace(content, "$1$2C");
         }
 
 
@@ -18,8 +20,6 @@ namespace MaxPainInfrastructure.Services
         public SdlChn BuildStraddle(OptChn chain)
         {
             bool useLookup = true;
-
-            bool hasDate = chain.Options.Count != 0 && chain.Options[0].d != null && chain.Options[0].d.Length > 0;
 
             SdlChn sc = new SdlChn
             {
@@ -29,6 +29,10 @@ namespace MaxPainInfrastructure.Services
                 InterestRate = chain.InterestRate,
                 Prices = chain.Prices
             };
+
+            if (chain.Options == null || chain.Options.Count == 0) return sc;
+
+            bool hasDate = chain.Options.Count != 0 && chain.Options[0].d != null && chain.Options[0].d.Length > 0;
 
             var calls = chain.Options.Where(x => x.OptionType() == OptionTypes.Call).ToList();
             var callsLookup = calls.ToLookup(o => o.ot);
@@ -158,7 +162,15 @@ namespace MaxPainInfrastructure.Services
         {
             var histories = new List<MaxPainHistory>();
 
-            var temp = DBHelper.Deserialize<SdlChn>(DBHelper.Serialize(sc));
+            var temp = new SdlChn
+            {
+                Source = sc.Source,
+                Stock = sc.Stock,
+                StockPrice = sc.StockPrice,
+                InterestRate = sc.InterestRate,
+                CreatedOn = sc.CreatedOn,
+                Prices = sc.Prices
+            };
 
             var dates = sc.Straddles.Select(x => x.d).Distinct();
             foreach (var date in dates)
@@ -192,14 +204,14 @@ namespace MaxPainInfrastructure.Services
             var maturities = sc.Straddles.Select(x => x.Mint()).Distinct();
             if (maturities.Count() > 1) throw new Exception("calculate method can only handle a single maturity.");
 
-            var ticker = sc.Straddles[0].Ticker();
+            var firstStraddle = sc.Straddles[0];
             var result = new MPChain
             {
-                Stock = ticker,
+                Stock = firstStraddle.Ticker(),
                 StockPrice = sc.StockPrice,
                 CreatedOn = sc.CreatedOn,
-                Maturity = sc.Straddles[0].Maturity(),
-                Mint = sc.Straddles[0].Mint()
+                Maturity = firstStraddle.Maturity(),
+                Mint = firstStraddle.Mint()
             };
 
             decimal maxCash = 0;

@@ -59,21 +59,5 @@ namespace MaxPainInfrastructure.Services
             return true;
         }
 
-        #region Connection
-        public string GetConnectionAWS()
-        {
-            return GetConnection("AWSConnection");
-        }
-
-        public string GetConnectionHome()
-        {
-            return GetConnection("HomeConnection");
-        }
-
-        private string GetConnection(string key)
-        {
-            return _configuration.GetConnectionString(key);
-        }
-        #endregion
     }
 }

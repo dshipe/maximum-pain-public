@@ -1,4 +1,5 @@
-﻿using MaxPainInfrastructure.Code;
+﻿using MaxPainChart;
+using MaxPainInfrastructure.Code;
 using MaxPainInfrastructure.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -51,61 +52,52 @@ namespace MaxPainInfrastructure.Services
         }
 
         #region Standard Email
-        public async Task<string> SendEmail(string from, string to, string? cc, string? bcc, string subject, string body, string? attachment)
-        {
-            return await SendEmail(from, to, cc, bcc, subject, body, attachment, false);
-        }
-
-        public async Task<string> SendEmail(string from, string to, string? cc, string? bcc, string subject, string body, string? attachment, bool isHtml)
+        public async Task<string> SendEmail(string? from, string? to, string? cc, string? bcc, string? subject, string? body, string? attachment, bool isHtml)
         {
             return await SendEmailAWS(from, to, cc, bcc, subject, body, attachment, isHtml);
         }
 
-        private async Task<string> SendEmailAWS(string from, string to, string? cc, string? bcc, string subject, string body, string? attachment, bool isHtml)
+        private async Task<string> SendEmailAWS(string? from, string? to, string? cc, string? bcc, string? subject, string? body, string? attachment, bool isHtml)
         {
-            var message = new MailMessage
-            {
-                From = new MailAddress(from),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = isHtml
-            };
-            message.To.Add(to);
-            if (!string.IsNullOrEmpty(cc)) message.CC.Add(cc);
-            if (!string.IsNullOrEmpty(bcc)) message.Bcc.Add(bcc);
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+                return "Invalid from or to email address";
 
-
-            // Supply your SMTP credentials below. Note that your SMTP credentials are different from your AWS credentials.
-            string USERNAME = await _secret.GetValue("AWSSMTPUsername");
-            string PASSWORD = await _secret.GetValue("AWSSMTPPassword");
-            // Amazon SES SMTP host name. This example uses the US West (Oregon) region.
-            string HOST = await _secret.GetValue("AWSSMTPHost");
-            // The port you will connect to on the Amazon SES SMTP endpoint.
-            int PORT = Convert.ToInt32(await _secret.GetValue("AWSSMTPPort"));
-
-            // Create an SMTP client with the specified host name and port.
             try
             {
-                using (SmtpClient client = new SmtpClient(HOST, PORT))
+                var credentials = await Task.WhenAll(
+                    _secret.GetValue("AWSSMTPUsername"),
+                    _secret.GetValue("AWSSMTPPassword"),
+                    _secret.GetValue("AWSSMTPHost"),
+                    _secret.GetValue("AWSSMTPPort")
+                );
+
+                using var message = new MailMessage
                 {
-                    // Create a network credential with your SMTP user name and password.
-                    client.Credentials = new System.Net.NetworkCredential(USERNAME, PASSWORD);
+                    From = new MailAddress(from),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = isHtml
+                };
 
-                    // Use SSL when accessing Amazon SES. The SMTP session will begin on an unencrypted connection, and then 
-                    // the client will issue a STARTTLS command to upgrade to an encrypted connection using SSL.
-                    client.EnableSsl = true;
+                message.To.Add(to);
+                if (!string.IsNullOrEmpty(cc)) message.CC.Add(cc);
+                if (!string.IsNullOrEmpty(bcc)) message.Bcc.Add(bcc);
 
-                    // Send the email. 
-                    await client.SendMailAsync(message);
-                }
+                using var client = new SmtpClient(credentials[2], int.Parse(credentials[3]))
+                {
+                    Credentials = new System.Net.NetworkCredential(credentials[0], credentials[1]),
+                    EnableSsl = true
+                };
+
+                await client.SendMailAsync(message);
+                return string.Empty;
             }
             catch (Exception ex)
             {
-                string header = $"EmailHelper.SendEmailAWS ERROR to=\"{to}\" subject=\"{subject}\"";
-                await _logger.InfoAsync(header, ex.ToString());
+                var error = $"SendEmailAWS ERROR to=\"{to}\" subject=\"{subject}\"";
+                await _logger.InfoAsync(error, ex.ToString());
+                return ex.Message;
             }
-
-            return string.Empty;
         }
         #endregion
 
@@ -142,7 +134,7 @@ namespace MaxPainInfrastructure.Services
         public async Task<bool> EmailListUpdate(string name, string email, EmailStatus status)
         {
             string sql = @"
-                IF NOT EXISTS (
+                IF EXISTS (
                     SELECT Id
                     FROM EmailAccount
                     WHERE Email = @Email
@@ -158,8 +150,8 @@ namespace MaxPainInfrastructure.Services
                 END
             ";
 
-            List<SqlParameter> parameters = new List<SqlParameter>();
-            parameters.Add(new SqlParameter("StatusId", (System.Int32)status));
+            var parameters = new List<SqlParameter>();
+            parameters.Add(new SqlParameter("StatusId", (int)status));
             parameters.Add(new SqlParameter("Email", email));
             parameters.Add(new SqlParameter("Name", name));
 
@@ -200,7 +192,7 @@ namespace MaxPainInfrastructure.Services
                 return (false, response);
             }
 
-            DateTime lastRun = Convert.ToDateTime(_configuration.Get("ScreenerLastRun"));
+            DateTime lastRun = Convert.ToDateTime(await _configuration.Get("ScreenerLastRun"));
             int currentDay = Convert.ToInt32(current.ToString("yyyyMMdd"));
             int lastRunDay = Convert.ToInt32(lastRun.ToString("yyyyMMdd"));
             if (lastRunDay >= currentDay)
@@ -238,7 +230,7 @@ namespace MaxPainInfrastructure.Services
             string imageTicker = await _configuration.Get("ScreenerImageTicker");
             byte[] buffer = await GetEmailImage(imageTicker);
 
-            string xslContent = Utility.GetEmbeddedFile("screener.xsl");
+            string xslContent = Utility.GetEmbeddedFile("Screener.xsl");
             XmlDocument xmlDom = await GetScreenerXml(actives, walls, pains, imageTicker, buffer);
             string html = await GetScreenerHtml(xmlDom, xslContent, useShortUrls);
             string subject = $"maximum-pain.com daily stock option screener {DateTime.Now:MM/dd/yyyy}";
@@ -256,19 +248,19 @@ namespace MaxPainInfrastructure.Services
             string xmlWalls = Utility.SerializeXmlClean(walls);
             string xmlPains = Utility.SerializeXmlClean(pains);
 
-            var lambda = await _secret.GetValue("ConstLambdaUrl");
+            var lambdaUrl = await _secret.GetValue("ConstLambdaUrl");
 
             //string unsubsribeUrl = "https://maximum-pain.com/api/emaillist/unsubscribe?email={$email}";
-            string unsubsribeUrl = string.Concat("https://", lambda, "/api/emailList/unsubscribe?email={$email}");
+            string unsubsribeUrl = $"https://{lambdaUrl}/api/emailList/unsubscribe?email={{$email}}";
             string xml = $"<Root>{xmlActives}{xmlWalls}{xmlPains}</Root>";
 
             XmlDocument xmlDom = new XmlDocument();
             xmlDom.LoadXml(xml);
             xmlDom.DocumentElement.SetAttribute("UnsubscribeUrl", unsubsribeUrl);
 
-            var lambdaUrl = await _secret.GetValue("ConstLambdaUrl");
-
-            string imageUrl = $"https://{lambdaUrl}/api/email/image";
+            string imageUrl = buffer?.Length > 0
+                ? $"data:image/png;base64,{Convert.ToBase64String(buffer)}"
+                : $"https://{lambdaUrl}/api/email/image";
             string destination = $"https://{Constants.DOMAIN}/options/{imageTicker}";
 
             xmlDom.DocumentElement.SetAttribute("ChartTicker", imageTicker);
@@ -313,7 +305,7 @@ namespace MaxPainInfrastructure.Services
 
             SdlChn sc = _calculation.BuildStraddle(chain);
             ChartInfo info = _chart.LineDouble(sc, "Open Interest", "Open Interest", 200);
-            return await _chart.FetchImage(info);
+            return ChartHelper.RenderChart(info);
         }
 
         private async Task<string> ShortenUrlsInHtml(string html)

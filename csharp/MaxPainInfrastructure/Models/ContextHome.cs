@@ -20,6 +20,7 @@ namespace MaxPainInfrastructure.Models
         public DbSet<OutsideOIWalls> OutsideOIWalls { get; set; }
         public DbSet<StockTicker> StockTicker { get; set; }
         public DbSet<HistoricalStockQuoteXML> HistoricalStockQuoteXML { get; set; }
+        public DbSet<HistoricalOptionQuote> HistoricalOptionQuote { get; set; }
         public DbSet<HistoricalOptionQuoteXML> HistoricalOptionQuoteXML { get; set; }
         public DbSet<ImportStaging> ImportStaging { get; set; }
         public DbSet<ImportCache> ImportCache { get; set; }
@@ -47,12 +48,16 @@ namespace MaxPainInfrastructure.Models
         {
             return await DBHelper.FetchScalar(this.Database, sql, parms, fieldName);
         }
+        public async Task<List<T>> FetchModel<T>(string sql, List<SqlParameter>? parms, int timeout)
+        {
+            return await DBHelper.FetchModel<T>(this.Database, sql, parms, timeout);
+        }
 
-        public async Task<List<HistoricalOptionQuoteXML>> GetHistoricalOptionQuoteXML(string ticker, DateTime past)
+        public async Task<List<HistoricalOptionQuote>> GetHistoricalOptionQuote(string ticker, DateTime past)
         {
             string sql = @"
                 SELECT Id, Ticker, CreatedOn, Content 
-                FROM HistoricalOptionQuoteXML WITH(NOLOCK) 
+                FROM HistoricalOptionQuote WITH(NOLOCK) 
                 WHERE Ticker = @ticker
                 AND CreatedOn > @past
                 ORDER BY CreatedOn
@@ -65,7 +70,7 @@ namespace MaxPainInfrastructure.Models
             };
 
             string json = await DBHelper.FetchJson(this.Database, sql, parms, 60);
-            return DBHelper.Deserialize<List<HistoricalOptionQuoteXML>>(json);
+            return DBHelper.Deserialize<List<HistoricalOptionQuote>>(json);
         }
 
         public async Task<DateTime> GetLastOptionsDate()
@@ -264,39 +269,43 @@ namespace MaxPainInfrastructure.Models
         public async Task<List<DailyScan>?> DailyScan(DateTime midnight)
         {
             string sql = @"
-                SELECT TOP 50
+                SELECT TOP 100
                     dr.[Id]
-                    ,dr.[Ticker]
-                    ,t.[Source]
-                    ,dr.[CurrentPrice]
-                    ,dr.[RSRating]
-                    ,dr.[Sma10Day]
-                    ,dr.[Sma20Day]
-                    ,dr.[Sma50Day]
-                    ,dr.[Sma150Day]
-                    ,dr.[Sma200Day]
-                    ,dr.[Week52Low]
-                    ,dr.[Week52High]
-                    ,dr.[Volume]
-                    ,dr.[Volume20]
-                    ,dr.[VolumePerc]
                     ,dr.[ADR]
+                    ,NULL AS Base64 --,dr.[Base64]
                     ,dr.[BBUpper]
                     ,dr.[BBMiddle]
                     ,dr.[BBLower]
                     ,dr.[BBW]
-                    ,dr.[Date]
                     ,dr.[CreatedOn]
-                    ,dr.[Base64]
-                    ,p.[Base64] AS ProgressBase64
+                    ,dr.[Date]
+                    ,dr.[HasAlerted]
+                    ,dr.[FlagAtrDrop]
+                    ,dr.[FlagFlatChannel]
+                    ,dr.[FlagHigherLows]
+                    ,dr.[FlagMovingAverages]
+                    ,dr.[FlagPricePattern]
+                    ,dr.[FlagVolumeRequirements]
+                    ,dr.[FlagMarketCap]
+                    ,dr.[FlagAvoidGapDown]
+                    ,dr.[FlagRsiMomentum]
+                    ,dr.[Model]
+                    ,dr.[Price]
+                    ,NULL AS ProgressBase64 --,p.[Base64] AS ProgressBase64
                     ,p.[CurrentPrice] AS ProgressCurrentPrice
                     ,p.[ModifiedOn] AS ProgressModifiedOn
+                    ,dr.[RSI]
+                    ,t.[Sector]
+                    ,t.[Source]
+                    ,dr.[Ticker]
+                    ,dr.[Volume]
+                    ,dr.[Volume20]
                     ,dr.WatchFlag 
                 FROM Python.dbo.DailyResult dr WITH(NOLOCK)
                 INNER JOIN Python.dbo.Ticker t WITH(NOLOCK) ON dr.Ticker = t.Ticker
                 LEFT JOIN Python.dbo.DailyResultProgress p WITH(NOLOCK) ON dr.Ticker = p.Ticker
                 WHERE dr.[Date] = @parmMidnight
-                ORDER BY dr.[RSRating] DESC
+                ORDER BY dr.[RSI] DESC
             ";
 
             var parms = new List<SqlParameter>
@@ -310,48 +319,16 @@ namespace MaxPainInfrastructure.Models
             return result.OrderBy(x => x.Ticker).ToList();
         }
 
-        public async Task<List<DailyScan>?> DailyScanUpdateWatch(int id, bool flag)
+        public async Task DailyScanUpdateWatch(int id, bool flag)
         {
-            string sql = @"
-                UPDATE Python.dbo.DailyResult SET WatchFlag = @parmFlag WHERE Id = @parmId
-
-                SELECT 
-                    dr.[Id]
-                    ,dr.[Ticker]
-                    ,t.[Source]
-                    ,dr.[CurrentPrice]
-                    ,dr.[RSRating]
-                    ,dr.[Sma10Day]
-                    ,dr.[Sma20Day]
-                    ,dr.[Sma50Day]
-                    ,dr.[Sma150Day]
-                    ,dr.[Sma200Day]
-                    ,dr.[Week52Low]
-                    ,dr.[Week52High]
-                    ,dr.[Volume]
-                    ,dr.[Volume20]
-                    ,dr.[VolumePerc]
-                    ,dr.[ADR]
-                    ,dr.[BBUpper]
-                    ,dr.[BBMiddle]
-                    ,dr.[BBLower]
-                    ,dr.[BBW]
-                    ,dr.[Date]
-                    ,dr.[CreatedOn]
-                    ,dr.WatchFlag
-                FROM Python.dbo.DailyResult dr WITH(NOLOCK)
-                INNER JOIN Python.dbo.Ticker t WITH(NOLOCK) ON dr.Ticker = t.Ticker
-                WHERE Id = @parmId
-            ";
-
+            string sql = "UPDATE Python.dbo.DailyResult SET WatchFlag = @parmFlag WHERE Id = @parmId";
             var parms = new List<SqlParameter>
             {
                 new SqlParameter("parmId", id),
                 new SqlParameter("parmFlag", flag ? "1" : "0")
             };
 
-            string json = await DBHelper.FetchJson(this.Database, sql, parms);
-            return DBHelper.Deserialize<List<DailyScan>>(json);
+            await DBHelper.Execute(this.Database, sql, parms);
         }
 
         public async Task<string> DailyScanAdd(string ticker)
@@ -363,32 +340,27 @@ DECLARE @Midnight DATETIME = CONVERT(DateTime, DATEDIFF(DAY, 0, @Yesterday))
 
 SELECT @Midnight = MAX([Date]) FROM Python.dbo.DailyResult
 
---SELECT @CurrenDateEST, @Yesterday, @Midnight
-
---DELETE FROM Python.dbo.DailyResult WHERE Ticker=@parmTicker AND [Date]=@Midnight
-
 IF NOT EXISTS (
 	SELECT Id FROM Python.dbo.DailyResult WHERE Ticker=@parmTicker AND [Date]=@Midnight
 )
 BEGIN
 	INSERT INTO Python.dbo.DailyResult (
-	Ticker,CurrentPrice,RSRating,SMA10Day,SMA20Day
-	,SMA50Day,SMA150Day,SMA200Day,Week52Low,Week52High
-	,Volume,Volume20,ADR,BBUpper,BBMiddle
-	,BBLower,BBW,[Date],CreatedOn,[Base64]
-	,VolumePerc,WatchFlag,HasAlerted
-	) VALUES (
-	@parmTicker,0,99,0,0
-	,0,0,0,0,0
-	,0,100000,9,0,0
-	,0,0,@Midnight,GetUTCDate(),NULL
-	,0,1,0
-	)
+        [ADR],[CreatedOn],[Date],[Price],[RSI],[Ticker],[Volume],[Volume20]
+    ) VALUES (  
+        9, GetUTCDate(), @Midnight, NULL, 99, @parmTicker, 1000000, 1000000
+    )
+
+    UPDATE Python.dbo.DailyResult
+	    SET Price = d.[Close]
+	    ,Volume = d.Volume
+	FROM Python.dbo.DailyResult r
+	INNER JOIN Python.dbo.vwDaily d ON r.Ticker=d.Ticker AND r.[Date]=d.[Date]
+    WHERE d.Ticker = @parmTicker
+    AND d.[Date] = @Midnight
+    AND r.[Price] IS NULL
 END
 
-UPDATE Python.dbo.DailyResult SET HasAlerted=0 WHERE Ticker=@parmTicker AND [Date]=@Midnight
-
---SELECT * FROM Python.dbo.DailyResult WHERE [Date]=@Midnight ORDER BY Ticker
+UPDATE Python.dbo.DailyResult SET HasAlerted=0, WatchFlag=1 WHERE Ticker=@parmTicker AND [Date]=@Midnight
             ";
 
 

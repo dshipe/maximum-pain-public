@@ -18,7 +18,16 @@ namespace MaxPainInfrastructure.Services
 
     public class SchwabService : ISchwabService
     {
-        private static readonly HttpClient _httpClient = new HttpClient();
+        // private static readonly HttpClient _httpClient = new HttpClient();
+        private static readonly HttpClient _httpClient = new HttpClient(new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(15),
+            MaxConnectionsPerServer = 10
+        })
+        {
+            Timeout = TimeSpan.FromMinutes(2)
+        };
+
 
         private readonly ILoggerService _loggerSvc;
         private readonly ISecretService _secretSvc;
@@ -106,44 +115,36 @@ namespace MaxPainInfrastructure.Services
 
         private async Task<ScwToken> GetAccessToken(ScwToken currentToken)
         {
-            string grantType = "refresh_token";
             string method = "GetAccessToken";
-
-            var code = currentToken.refresh_token;
 
             Dictionary<string, string> data = new Dictionary<string, string>
             {
-                { "grant_type", grantType },
-                { "refresh_token", code }
+                { "grant_type", "refresh_token" },
+                { "refresh_token", currentToken.refresh_token }
             };
-            FormUrlEncodedContent content = new FormUrlEncodedContent(data);
 
-            // create authenication header
             string appKey = await _secretSvc.GetValue("SchwabAppKey");
             string secret = await _secretSvc.GetValue("SchwabSecret");
-            string authHeader = $"{appKey}:{secret}";
-            authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes(authHeader));
-            AuthenticationHeaderValue auth = new AuthenticationHeaderValue("Basic", authHeader);
+            var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{appKey}:{secret}"));
+            var auth = new AuthenticationHeaderValue("Basic", authHeader);
+            var content = new FormUrlEncodedContent(data);
 
-            string url = $"{_rootUrl}/v1/oauth/token";
-            method = $"{method} url={url} content={DBHelper.Serialize(data)} authHeader={authHeader}";
+            var url = $"{_rootUrl}/v1/oauth/token";
+            var json = await PostWithAuthHeader(auth, url, content, "GetAccessToken");
 
-            // post to Schwab
-            string json = await PostWithAuthHeader(auth, url, content, method);
-
-            ScwToken token = DBHelper.Deserialize<ScwToken>(json);
+            var token = DBHelper.Deserialize<ScwToken>(json);
             token.access_created_on_utc = currentToken.access_created_on_utc;
             token.refresh_created_on_utc = DateTime.UtcNow;
 
             return token;
         }
 
-        public async Task<ScwToken> UpdateToken(ScwToken token)
+        public async Task<ScwToken> UpdateToken(ScwToken token, bool force = false)
         {
             var diffInSeconds = (DateTime.UtcNow - token.refresh_created_on_utc).TotalSeconds;
             var remainingSeconds = _accessTokenTimeout - diffInSeconds;
 
-            if (remainingSeconds <= 0)
+            if (force || remainingSeconds <= 0)
             {
                 token = await GetAccessToken(token);
                 //token = await GetRefreshTokenOrig(token.refresh_token);
@@ -155,24 +156,9 @@ namespace MaxPainInfrastructure.Services
         #region Options
         public async Task<ScwExpirationList> GetExpirations(string accessToken, string ticker)
         {
-            string url = $"{_rootUrl}/marketdata/v1/expirationchain";
-
-            Dictionary<string, string> data = new Dictionary<string, string>
-                {
-                    { "symbol", ticker.ToUpper()  }
-                };
-            var content = new FormUrlEncodedContent(data);
-            var querystring = await content.ReadAsStringAsync();
-            url = $"{url}?{querystring}";
-
-            string result = await GetWithAuth(accessToken, url, "Schwab Option");
-
-            //var outputFile = string.Format(@"{0}\json\schwab\expirationchain-raw.json", Directory.GetCurrentDirectory());
-            //File.WriteAllText(outputFile, result);
-
-            ScwExpirationList expList = DBHelper.Deserialize<ScwExpirationList>(result);
-
-            return expList;
+            var url = $"{_rootUrl}/marketdata/v1/expirationchain?symbol={Uri.EscapeDataString(ticker.ToUpper())}";
+            var result = await GetWithAuth(accessToken, url, "Schwab Option");
+            return DBHelper.Deserialize<ScwExpirationList>(result);
         }
 
         public async Task<OptChn> GetOptions(string accessToken, string ticker)
@@ -203,7 +189,7 @@ namespace MaxPainInfrastructure.Services
             string upper = ticker.ToUpper();
             if (upper.Equals("SPX")) upper = "$SPX";
 
-            List<string> daily = new List<string>() { "QQQ", "$SPX", "SPX", "SPXW", "SPY" };
+            List<string> daily = new List<string>() { "QQQ", "$SPX", "SPX", "SPXW", "SPY", "GLD" };
             if (daily.Contains(upper))
             {
                 incrementDays = 5;
@@ -229,17 +215,13 @@ namespace MaxPainInfrastructure.Services
             dates.RemoveAt(0);
 
             // fetch the first Date
-            string json = await GetOptionsRawStringByDate(accessToken, upper, dm.Start, dm.End);
-            //JObject dstObj = JObject.Parse(json);
-            ScwOptChn dstChain = ParseOptions(json);
+            ScwOptChn dstChain = await GetAndParseOptionsByDate(accessToken, upper, dm.Start, dm.End);
 
             // fetch JSON for each date
             await Parallel.ForEachAsync(dates, async (dm, cancellationToken) =>
             {
-                json = await GetOptionsRawStringByDate(accessToken, upper, dm.Start, dm.End);
-                logList.Add($"counter={dm.Index} ms={timer.ElapsedMilliseconds} ticker=\"{ticker}\" dm.Start=\"{dm.Start}\" json length=\"{json.Length}\" array length=\"{dstChain.options.Length}\"");
-                //CombineRawJson(dstObj, json);
-                ScwOptChn srcChain = ParseOptions(json);
+                ScwOptChn srcChain = await GetAndParseOptionsByDate(accessToken, upper, dm.Start, dm.End);
+                logList.Add($"counter={dm.Index} ms={timer.ElapsedMilliseconds} ticker=\"{ticker}\" dm.Start=\"{dm.Start}\" array length=\"{dstChain.options.Length}\"");
 
                 if (srcChain != null && srcChain.options != null && srcChain.options.Length != 0)
                 {
@@ -262,6 +244,27 @@ namespace MaxPainInfrastructure.Services
             return dstChain;
         }
 
+        private async Task<ScwOptChn> GetAndParseOptionsByDate(string accessToken, string ticker, DateTime start, DateTime end)
+        {
+            try
+            {
+                string json = await GetOptionsRawStringByDate(accessToken, ticker, start, end);
+                return ParseOptions(json);
+            }
+            catch (Exception ex) when (ex.Message.Contains("TooBigBody"))
+            {
+                await _loggerSvc.InfoAsync($"TooBigBody: ticker=\"{ticker}\" start=\"{start:yyyy-MM-dd}\" end=\"{end:yyyy-MM-dd}\" — retrying with split range", ex.Message);
+                var mid = start.AddDays((end - start).TotalDays / 2);
+                ScwOptChn chain1 = await GetAndParseOptionsByDate(accessToken, ticker, start, mid);
+                ScwOptChn chain2 = await GetAndParseOptionsByDate(accessToken, ticker, mid.AddDays(1), end);
+
+                if (chain2?.options != null && chain2.options.Length > 0)
+                    chain1.options = ConcatArrays(chain1.options, chain2.options);
+
+                return chain1;
+            }
+        }
+
         private async Task<string> GetOptionsRawStringByDate(string accessToken, string ticker, DateTime start, DateTime end)
         {
             string url = $"{_rootUrl}/marketdata/v1/chains";
@@ -269,21 +272,21 @@ namespace MaxPainInfrastructure.Services
             Dictionary<string, string> allData = new Dictionary<string, string>
                 {
                     { "symbol", ticker.ToUpper() },
-                    { "contractType", null },
-                    { "strikeCount", null },
-                    { "includeUnderlyingQuotes", null },
-                    { "strategy", null },
-                    { "interval", null },
-                    { "range", null },
-                    { "fromDate", null },
-                    { "toDate", null },
-                    { "volatility", null },
-                    { "underlyingPrice", null },
-                    { "interestRate", null },
-                    { "daysToExpiration", null },
-                    { "expMonth", null },
-                    { "optionType", null },
-                    { "entitlement", null }
+                    { "contractType", string.Empty },
+                    { "strikeCount", string.Empty },
+                    { "includeUnderlyingQuotes", string.Empty },
+                    { "strategy", string.Empty },
+                    { "interval", string.Empty },
+                    { "range", string.Empty },
+                    { "fromDate", string.Empty },
+                    { "toDate", string.Empty },
+                    { "volatility", string.Empty },
+                    { "underlyingPrice", string.Empty },
+                    { "interestRate", string.Empty },
+                    { "daysToExpiration", string.Empty },
+                    { "expMonth", string.Empty },
+                    { "optionType", string.Empty },
+                    { "entitlement", string.Empty }
                 };
 
             Dictionary<string, string> data = new Dictionary<string, string>
@@ -391,10 +394,10 @@ namespace MaxPainInfrastructure.Services
         public ScwOptChn ParseOptions(string json)
         {
             var rawChain = DBHelper.Deserialize<Models.Schwab.Raw.OptionChain>(json);
-            var rawOptions = ConcatArrays(
-                rawChain.CallExpDateMap.SelectMany(m => m.Value).SelectMany(s => s.Value).ToArray() ?? Array.Empty<Models.Schwab.Raw.Option>(),
-                rawChain.PutExpDateMap.SelectMany(m => m.Value).SelectMany(s => s.Value).ToArray() ?? Array.Empty<Models.Schwab.Raw.Option>()
-            );
+
+            var callOptions = rawChain.CallExpDateMap?.SelectMany(m => m.Value).SelectMany(s => s.Value) ?? Enumerable.Empty<Models.Schwab.Raw.Option>();
+            var putOptions = rawChain.PutExpDateMap?.SelectMany(m => m.Value).SelectMany(s => s.Value) ?? Enumerable.Empty<Models.Schwab.Raw.Option>();
+            var allOptions = callOptions.Concat(putOptions).ToArray();
 
             return new ScwOptChn()
             {
@@ -402,7 +405,7 @@ namespace MaxPainInfrastructure.Services
                 price = Convert.ToSingle(rawChain.UnderlyingPrice),
                 interestRate = Convert.ToSingle(rawChain.InterestRate),
                 volatility = Convert.ToSingle(rawChain.Volatility),
-                options = DBHelper.Deserialize<ScwOpt[]>(DBHelper.Serialize(rawOptions))
+                options = DBHelper.Deserialize<ScwOpt[]>(DBHelper.Serialize(allOptions))
             };
         }
 
@@ -481,17 +484,8 @@ namespace MaxPainInfrastructure.Services
         #region stocks
         public async Task<List<Stock>> GetStocks(string accessToken, string tickers)
         {
-            string url = $"{_rootUrl}/marketdata/v1/quotes";
-
-            Dictionary<string, string> data = new Dictionary<string, string>
-            {
-                { "symbols", tickers.ToUpper() }
-            };
-            var content = new FormUrlEncodedContent(data);
-            var querystring = await content.ReadAsStringAsync();
-            url = $"{url}?{querystring}";
-
-            string result = await GetWithAuth(accessToken, url, "Schwab Stock");
+            var url = $"{_rootUrl}/marketdata/v1/quotes?symbols={Uri.EscapeDataString(tickers.ToUpper())}";
+            var result = await GetWithAuth(accessToken, url, "Schwab Stock");
             var stockQuotes = ParseStocks(result);
             return MapStocks(stockQuotes);
         }
@@ -530,26 +524,11 @@ namespace MaxPainInfrastructure.Services
         #region Market
         public async Task<bool> IsMarketOpen(string accessToken, DateTime dte)
         {
-            string url = $"{_rootUrl}/marketdata/v1/markets";
+            var url = $"{_rootUrl}/marketdata/v1/markets?markets=OPTION&date={dte:yyyy-MM-dd}";
+            var result = await GetWithAuth(accessToken, url, "Schwab Market");
+            var market = DBHelper.Deserialize<ScwMarket>(result);
 
-            Dictionary<string, string> data = new Dictionary<string, string>
-            {
-                { "markets", "OPTION" },
-                { "date", dte.ToString("yyyy-MM-dd") },
-            };
-            var content = new FormUrlEncodedContent(data);
-            var querystring = await content.ReadAsStringAsync();
-            url = $"{url}?{querystring}";
-
-            string result = await GetWithAuth(accessToken, url, "Schwab Market");
-            ScwMarket market = DBHelper.Deserialize<ScwMarket>(result);
-
-            if (market == null) return false;
-            if (market.option == null) return false;
-            if (market.option.EQO != null && market.option.EQO.isOpen) return true;
-            if (market.option.IND != null && market.option.IND.isOpen) return true;
-
-            return false;
+            return market?.option?.EQO?.isOpen == true || market?.option?.IND?.isOpen == true;
         }
         #endregion
 
@@ -873,13 +852,13 @@ namespace MaxPainInfrastructure.Services
 
     public class WatchlistTicker
     {
-        public string Symbol { get; set; }
-        public string InstrumentType { get; set; }
+        public string? Symbol { get; set; }
+        public string? InstrumentType { get; set; }
     }
 
     public class SchwabAccount
     {
-        public string AccountNumber { get; set; }
-        public string HashValue { get; set; }
+        public string? AccountNumber { get; set; }
+        public string? HashValue { get; set; }
     }
 }

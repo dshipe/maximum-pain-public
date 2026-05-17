@@ -72,8 +72,9 @@ namespace MaxPainInfrastructure.Services
                 System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
                 xmlDoc.LoadXml(result);
                 string? shortUrl = xmlDoc.GetElementsByTagName("url")?[0]?.InnerText;
-                //string longUrl = xmlDoc.GetElementsByTagName("long_url")[0].InnerText;
-                return shortUrl;
+                if (!string.IsNullOrEmpty(shortUrl))
+                    return shortUrl;
+                return url;
             }
             catch (Exception)
             {

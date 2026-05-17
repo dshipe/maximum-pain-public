@@ -7,8 +7,6 @@ namespace MaxPainInfrastructure.Services
     public interface IEmailService
     {
         #region Standard Email
-        public Task<string> SendEmail(string from, string to, string cc, string bcc, string subject, string body, string attachment);
-
         public Task<string> SendEmail(string from, string to, string cc, string bcc, string subject, string body, string attachment, bool isHtml);
         #endregion
 

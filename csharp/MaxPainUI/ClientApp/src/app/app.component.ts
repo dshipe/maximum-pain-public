@@ -3,7 +3,9 @@ set title
 https://stackoverflow.com/questions/47900447/how-to-change-page-title-with-routing-in-angular-application
 */
 
-import { Component, OnInit, Renderer2 } from '@angular/core';
+import { Component, OnInit, Renderer2, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Title, Meta } from '@angular/platform-browser';
 import { filter, map } from "rxjs/operators";
@@ -27,7 +29,9 @@ export class AppComponent implements OnInit{
       private renderer: Renderer2,
       private router: Router, 
       private activatedRoute: ActivatedRoute, 
-      private titleService: Title, 
+      private titleService: Title,
+      @Inject(PLATFORM_ID) private platformId: Object,
+      @Inject(DOCUMENT) private doc: Document, 
       private metaService: Meta
   ) {
       this.router.events.pipe(
@@ -61,8 +65,10 @@ export class AppComponent implements OnInit{
         let local_theme = "dark";
         if (theme.newValue == "bootstrap") local_theme = "light";
 
-        const body = document.body as HTMLElement
-        body.setAttribute('data-bs-theme', local_theme);
+        if (isPlatformBrowser(this.platformId)) {
+          const body = this.doc.body as HTMLElement;
+          body.setAttribute('data-bs-theme', local_theme);
+        }
       })
     }
 

@@ -1,4 +1,4 @@
-using MaxPainInfrastructure.Code;
+using MaxPainAPI.Code;
 using MaxPainInfrastructure.Models;
 using MaxPainInfrastructure.Services;
 using Microsoft.AspNetCore.Builder;
@@ -26,10 +26,16 @@ namespace MaxPainAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            /*
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
-
             string AWSConnection = Configuration.GetConnectionString("AWSConnection");
             string HomeConnection = Configuration.GetConnectionString("HomeConnection");
+            */
+
+            var config = new Config();
+            var ConnectionStringsConfig = new Options<ConnectionStrings>(config.Get<ConnectionStrings>());
+            string AWSConnection = ConnectionStringsConfig.Value.AWSConnection;
+            string HomeConnection = ConnectionStringsConfig.Value.HomeConnection;
 
             services.AddDbContext<AwsContext>(options => options.UseSqlServer(AWSConnection));
             services.AddDbContext<HomeContext>(options => options.UseSqlServer(HomeConnection));
@@ -37,9 +43,11 @@ namespace MaxPainAPI
             services.AddSingleton<IAppDbContextFactory, AppDbContextFactory>();
 
             // the DB Context is scoped, so any service using the DB should be scoped
+            services.AddScoped<ICalculationService, CalculationService>();
             services.AddScoped<IChartService, ChartService>();
             services.AddScoped<IConfigurationService, ConfigurationService>();
             services.AddScoped<IControllerService, ControllerService>();
+            services.AddScoped<IDateService, DateService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IFinDataService, FinDataService>();
             services.AddScoped<IFinImportService, FinImportService>();
@@ -48,13 +56,11 @@ namespace MaxPainAPI
             services.AddScoped<IUrlShortService, UrlShortService>();
             services.AddScoped<IHistoryService, HistoryService>();
             services.AddScoped<ISchwabService, SchwabService>();
+            services.AddScoped<ISecretService, SecretService>();
             services.AddScoped<ISMSService, SMSService>();
 
             //services.AddScoped<TwitterHelper>();
 
-            services.AddSingleton<ICalculationService, CalculationService>();
-            services.AddSingleton<IDateService, DateService>();
-            services.AddSingleton<ISecretService, SecretService>();
 
             // required for node.js to run javascript
             //services.AddNodeServices();

@@ -29,12 +29,12 @@ namespace MaxPainInfrastructure.Services
 
 
         #region option
-        public List<Opt> BuildOptList(List<HistoricalOptionQuoteXML> historyXmls)
+        public List<Opt> BuildOptList(List<HistoricalOptionQuote> histories)
         {
             List<Opt> options = new List<Opt>();
-            foreach (HistoricalOptionQuoteXML historyXml in historyXmls)
+            foreach (HistoricalOptionQuote history in histories)
             {
-                OptChn chain = Utility.Deserialize<OptChn>(historyXml.Content);
+                OptChn chain = DBHelper.Deserialize<OptChn>(history.Content);
 
                 // manually set the "date"
                 string d = chain.CreatedOn.ToString("MM/dd/yy");
@@ -49,15 +49,14 @@ namespace MaxPainInfrastructure.Services
         {
             DateTime midnight = Convert.ToDateTime(utc.ToString("MM/dd/yyyy"));
 
-            List<HistoricalOptionQuoteXML> historyXmls = await _homeContext.HistoricalOptionQuoteXML.Where(q => q.CreatedOn == midnight).ToListAsync();
-            //List<HistoricalOptionQuoteXML> historyXmls = await _homeContext.HistoricalOptionQuoteXML.Where(q => q.CreatedOn == midnight && q.Ticker.Equals("HRL")).ToListAsync();
-            if (historyXmls == null)
+            List<HistoricalOptionQuote> histories = await _homeContext.HistoricalOptionQuote.Where(q => q.CreatedOn== midnight).ToListAsync();
+            if (histories == null)
             {
-                historyXmls = await _homeContext.HistoricalOptionQuoteXML
+                histories = await _homeContext.HistoricalOptionQuote
                    .Where(q => q.Ticker.Equals("AAPL") && q.CreatedOn >= midnight && q.CreatedOn < midnight.AddDays(1))
                    .ToListAsync();
             }
-            return BuildOptList(historyXmls);
+            return BuildOptList(histories);
         }
 
         public async Task<OptChn> GetByTicker(string ticker, int pastDays, int futureDays)
@@ -77,14 +76,14 @@ namespace MaxPainInfrastructure.Services
                 .ToListAsync();
             */
 
-            List<HistoricalOptionQuoteXML> quotes = await _homeContext.GetHistoricalOptionQuoteXML(ticker, past);
+            List<HistoricalOptionQuote> quotes = await _homeContext.GetHistoricalOptionQuote(ticker, past);
 
             try
             {
                 //Parallel.ForEach(quotes, quote =>
-                foreach (HistoricalOptionQuoteXML quote in quotes)
+                foreach (HistoricalOptionQuote quote in quotes)
                 {
-                    OptChn oc = Utility.Deserialize<OptChn>(quote.Content);
+                    OptChn oc = DBHelper.Deserialize<OptChn>(quote.Content);
                     List<Opt>? options = null;
                     if (futureDays == 0)
                     {
@@ -122,12 +121,12 @@ namespace MaxPainInfrastructure.Services
         #endregion
 
         #region chain
-        public List<OptChn> BuildChnList(List<HistoricalOptionQuoteXML> historyXmls)
+        public List<OptChn> BuildChnList(List<HistoricalOptionQuote> histories)
         {
             List<OptChn> chains = new List<OptChn>();
-            foreach (HistoricalOptionQuoteXML historyXml in historyXmls)
+            foreach (HistoricalOptionQuote history in histories)
             {
-                OptChn chain = Utility.Deserialize<OptChn>(historyXml.Content);
+                OptChn chain = DBHelper.Deserialize<OptChn>(history.Content);
                 chains.Add(chain);
             }
             return chains;
@@ -141,38 +140,36 @@ namespace MaxPainInfrastructure.Services
         {
             DateTime midnight = Convert.ToDateTime(utc.ToString("MM/dd/yyyy"));
 
-            List<HistoricalOptionQuoteXML> historyXmls = new List<HistoricalOptionQuoteXML>();
+            List<HistoricalOptionQuote> histories = new List<HistoricalOptionQuote>();
             if (string.IsNullOrEmpty(ticker))
             {
-                historyXmls = await _homeContext.HistoricalOptionQuoteXML
-                    .Where(q => q.CreatedOn == midnight)
-                    .ToListAsync();
+                return BuildChnList(
+                    await _homeContext.HistoricalOptionQuote
+                        .AsNoTracking()
+                        .Where(q => q.CreatedOn == midnight)
+                        .ToListAsync()
+                );
             }
             else
             {
-                historyXmls = await _homeContext.HistoricalOptionQuoteXML
-                    .Where(q => q.Ticker.Equals(ticker) && q.CreatedOn == midnight)
-                    .ToListAsync();
+                return BuildChnList(
+                    await _homeContext.HistoricalOptionQuote
+                        .AsNoTracking()
+                        .Where(q => q.Ticker.Equals(ticker) && q.CreatedOn == midnight)
+                        .ToListAsync()
+                );
             }
-
-            /*
-			if (historyXmls == null)
-			{
-				historyXmls = await _homeContext.HistoricalOptionQuoteXML
-				   .Where(q => q.Ticker.Equals("AAPL") && q.CreatedOn >= midnight && q.CreatedOn < midnight.AddDays(1))
-				   .ToListAsync();
-			}
-			*/
-
-            return BuildChnList(historyXmls);
+            return BuildChnList(histories);
         }
 
         public async Task<List<OptChn>> ChainGetByTicker(string ticker, DateTime createdOn, int days)
         {
-            List<HistoricalOptionQuoteXML> historyXmls = await _homeContext.HistoricalOptionQuoteXML
-                .Where(q => q.Ticker.Equals(ticker) && q.CreatedOn >= createdOn && q.CreatedOn < createdOn.AddDays(days))
-                .ToListAsync();
-            return BuildChnList(historyXmls);
+            return BuildChnList(
+                await _homeContext.HistoricalOptionQuote
+                    .AsNoTracking()
+                    .Where(q => q.Ticker.Equals(ticker) && q.CreatedOn >= createdOn && q.CreatedOn < createdOn.AddDays(days))
+                    .ToListAsync()                
+            );
         }
         #endregion
 
@@ -183,6 +180,7 @@ namespace MaxPainInfrastructure.Services
             midnight = midnight.AddDays(-30);
 
             List<MarketCalendar> calendars = await _homeContext.MarketCalendar
+                .AsNoTracking()
                 .Where(mc => mc.Date > midnight)
                 .OrderByDescending(mc => mc.Date)
                 .ToListAsync();
@@ -196,6 +194,7 @@ namespace MaxPainInfrastructure.Services
             midnight = midnight.AddDays(-30);
 
             List<MarketCalendar> calendars = await _homeContext.MarketCalendar
+                .AsNoTracking()
                 .Where(mc => mc.Date > midnight && mc.Date < utc)
                 .OrderByDescending(mc => mc.Date)
                 .ToListAsync();
@@ -209,7 +208,7 @@ namespace MaxPainInfrastructure.Services
 				DECLARE @HistoryDate TABLE (Id INT IDENTITY, CreatedOn SMALLDATETIME)
 				INSERT INTO @HistoryDate (CreatedOn)
 				SELECT TOP 2 CreatedOn
-				FROM HistoricalOptionQuoteXML
+				FROM HistoricalOptionQuote
 				GROUP BY CreatedOn
 				ORDER BY CreatedOn DESC
 
@@ -238,6 +237,7 @@ namespace MaxPainInfrastructure.Services
             DateTime current = DateTime.Today.Date;
 
             List<HistoricalStockQuoteXML> historyXmls = await _homeContext.HistoricalStockQuoteXML
+                .AsNoTracking()
                 .Where(q => q.CreatedOn >= current.AddDays(0 - pastDays) && q.CreatedOn <= current.AddDays(futureDays))
                 .ToListAsync();
 

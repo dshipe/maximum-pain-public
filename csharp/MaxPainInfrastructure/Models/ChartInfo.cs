@@ -15,6 +15,8 @@ namespace MaxPainInfrastructure.Models
         public int Height { get; set; }
         public int Interval { get; set; }
         public bool Enable3D { get; set; }
+        public bool IsDarkMode { get; set; }
+        public bool IsTransparent { get; set; }
 
         //public List<string> SeriesNames {get; set;}
         //public List<string> ValueNames {get; set;}

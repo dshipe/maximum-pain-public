@@ -1,9 +1,11 @@
-import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges } from '@angular/core';
-import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
+
+import { isPlatformBrowser } from '@angular/common';
+import { OnInit, Component, Inject, PLATFORM_ID } from '@angular/core';
+import { FormGroup, FormControl, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
-import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
-import { takeUntil, switchMap, tap, map } from 'rxjs/operators'
+import { Observable } from 'rxjs'
 import { Title } from "@angular/platform-browser";
+import { SeoService } from '../services/seo.service';
 
 import { DataService } from '../services/data.service';
 import { UtilsService } from '../services/utils.service';
@@ -18,7 +20,7 @@ import { MaxpainHistory } from '../models/maxpain-history';
 })
 export class MaxpainHistoryComponent implements OnInit {
 
-  public tickerForm: FormGroup;
+  public tickerForm: FormGroup = new FormGroup({})
   public tickerObj: Ticker = new Ticker(this.utils);
   public tickerObjJson: string;
   public quotes: Array<MaxpainHistory>;
@@ -33,8 +35,11 @@ export class MaxpainHistoryComponent implements OnInit {
     private data: DataService,
     private utils: UtilsService,
     private state: StateService,
-    private title: Title) {
+    private title: Title,
+    private seo: SeoService,
+    @Inject(PLATFORM_ID) private platformId: Object) {
 
+        this.createForm(); // initialize form before template binding (SSR safe)
     // override the route reuse strategy
     this.route.routeReuseStrategy.shouldReuseRoute = function () {
       return false;
@@ -44,10 +49,15 @@ export class MaxpainHistoryComponent implements OnInit {
 
   ngOnInit() {
     this.tickerObj = this.state.initialize(this.actRoute, this.utils);
-    this.title.setTitle(this.tickerObj.Ticker + " Max Pain History");
+    this.seo.updateTickerSeo(this.tickerObj.Ticker, 'maxpain-history');
+    this.createForm();
+
+    // Skip API calls during SSR — prerender only needs SEO metadata
+    if (!isPlatformBrowser(this.platformId)) { return; }
+
+
     this.state.setTickerObj(this.tickerObj);
 
-    this.createForm();
 	  this.bindForm();
     this.tickerForm.get('formMaturity').valueChanges
       .subscribe(content=>{
@@ -96,7 +106,7 @@ export class MaxpainHistoryComponent implements OnInit {
 
   onSearch(event) {
     let url: string = "https://www.schwab.wallst.com/research/Client/Content/Documents/SchwabSymbolLookup.html?criteria=CGK&filter=STK,MFD,ETF,BND,PFD,IDX&newsite=y&callbackDomains=client,y%7Cclient,y&ResourceKey=DetailQuote&site=DWT&fieldId=ccSymbolInput&invoker=68747470733A2F2F7777772E7363687761622E77616C6C73742E636F6D2F72657365617263682F436C69656E742F53796D626F6C2F496E76616C696453796D626F6C3F5858583130335F4E634E645078476E55684C48493561486B354C30767856436251474E656A74766B5077555038673477356C754E2F4750316278642B394365785461372B2F4F4C4833563051672F794A7938485665316956466161466E5246355856464D786B6155596F39392B707730523151674969466F4F4F2F4F305977384D662F2F2F46364C4D436359764F343946476C3739365A6D79562B333434487A77545042624C552F756D3134646A6E6E585766577750726E7055536B41566C77304277552B57483175316446436D5764714C626A58624372657A3058413D3D2670333D592673796D626F6C3D43474B265F50433D495241";
-    window.open(url, "_blank");
+    if (isPlatformBrowser(this.platformId)) { window.open(url, "_blank"); }
   }
 
   createForm(): void {

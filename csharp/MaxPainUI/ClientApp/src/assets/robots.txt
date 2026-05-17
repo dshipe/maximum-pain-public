@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /scheduled-task
+
+Sitemap: https://maximum-pain.com/google-sitemap.xml

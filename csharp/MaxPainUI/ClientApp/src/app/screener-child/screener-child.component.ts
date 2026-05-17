@@ -1,16 +1,16 @@
-import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges } from '@angular/core';
+import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges, OnChanges } from '@angular/core';
 import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
 import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
 import { takeUntil, switchMap, tap, map } from 'rxjs/operators'
 
 import { MostActive } from "../models/most-active";
 
-@Component( {
+@Component({
   selector: 'app-screener-child',
   templateUrl: './screener-child.component.html',
   styleUrls: ['./screener-child.component.scss']
 })
-export class ScreenerChildComponent implements OnInit {
+export class ScreenerChildComponent implements OnInit, OnChanges {
 
   @Input() inJson: string;
   @Input() screenerType: string;

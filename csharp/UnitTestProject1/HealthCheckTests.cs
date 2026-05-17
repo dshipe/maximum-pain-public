@@ -36,7 +36,7 @@ namespace UnitTestProject1
             string xsltFile = @"C:\VSProjects\MaxPain\MaxPainAPI\maximum-pain.com\MaxPainAPI\xslt\HealthCheck.xslt";
             bool result = ControllerSvc.HealthCheckUnitTest(xsltFile, xmlSettings, false).Result;
 
-            Assert.AreEqual(true, result);
+            Assert.IsTrue(result);
         }
 
         private XmlDocument CreateDOM()

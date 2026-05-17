@@ -1,26 +1,27 @@
-import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges, HostListener } from '@angular/core';
+
+import { isPlatformBrowser } from '@angular/common';
+import { OnInit, Component, Inject, PLATFORM_ID } from '@angular/core';
 import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
-import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
-import { takeUntil, switchMap, tap, map } from 'rxjs/operators'
+import { Observable } from 'rxjs'
 import { Title } from "@angular/platform-browser";
+import { SeoService } from '../services/seo.service';
 
 import { DataService } from '../services/data.service';
 import { UtilsService } from '../services/utils.service';
 import { StateService } from '../services/state.service';
 import { Ticker } from "../models/ticker";
-import { MPChn, MPItem } from "../models/MaxPainItem";
+import { MPChn } from "../models/maxpainitem";
 import { SdlChn, Sdl } from "../models/straddle";
-import { TmplAstRecursiveVisitor } from '@angular/compiler';
 
-@Component( {
+@Component({
   selector: 'app-stacked',
   templateUrl: './stacked.component.html',
   styleUrls: ['./stacked.component.scss']
 })
 
 export class StackedComponent implements OnInit {
-  public tickerForm: FormGroup;
+  public tickerForm: FormGroup = new FormGroup({})
   public maturityForm: FormGroup;
   public tickerObj: Ticker;
   public tickerObjJson: string;
@@ -32,108 +33,99 @@ export class StackedComponent implements OnInit {
   public errorMsg: string;
   public isDebugHidden: boolean = true;
 
-  public hasScrolledPast1: boolean=false;
-  public hasScrolledPast2: boolean=false;
-  public hasScrolledPast3: boolean=false;
-  
-  //added the data parameter
   constructor(
-    private actRoute: ActivatedRoute, 
-    private route: Router, 
+    private actRoute: ActivatedRoute,
+    private route: Router,
     private readonly formBuilder: FormBuilder,
     private data: DataService,
     private utils: UtilsService,
     private state: StateService,
-    private title: Title) { 
-          
+    private title: Title,
+    private seo: SeoService,
+    @Inject(PLATFORM_ID) private platformId: Object) {
+
+        this.createForm(); // initialize form before template binding (SSR safe)
     // override the route reuse strategy
-    this.route.routeReuseStrategy.shouldReuseRoute = function() {
+    this.route.routeReuseStrategy.shouldReuseRoute = function () {
       return false;
     };
   }
 
   ngOnInit() {
     console.log("ngOnInit");
-    
+
     this.tickerObj = this.state.initialize(this.actRoute, this.utils);
 
-    this.title.setTitle(this.tickerObj.Ticker + " Max Pain and Open Interest Stacked");
+    if (!this.actRoute.snapshot.params.id) {
+      this.redirect('stacked', this.tickerObj.Ticker);
+      return;
+    }
+
+    this.seo.updateTickerSeo(this.tickerObj.Ticker, 'stacked');
+    this.createForm();
+
+    // Skip API calls during SSR — prerender only needs SEO metadata
+    if (!isPlatformBrowser(this.platformId)) { return; }
+
+
     this.state.setTickerObj(this.tickerObj);
 
-    this.createForm();
     this.createFormMaturity();
     this.bindForm();
     this.tickerForm.get('formMaturity').valueChanges
-      .subscribe(content=>{
-        this.logTickerObj("formMaturity valueChanges content="+content);
+      .subscribe(content => {
+        this.logTickerObj("formMaturity valueChanges content=" + content);
         this.changeMaturity(content);
         this.state.setTickerObj(this.tickerObj);
       })
 
     this.hasError = false;
     this.chain = this.state.getStraddleObj(this.tickerObj.Ticker);
-    if (this.chain!=null)
-    {
+    if (this.chain != null) {
       console.log("straddle from state");
-      this.initializeMaturity();  
+      this.initializeMaturity();
       this.bindForm();
 
       this.maturities = this.utils.distinctMaturityStraddle(this.chain.straddles);
       this.maturityForm.valueChanges
-        .subscribe(content=>{ this.changeCheckbox(); });
+        .subscribe(content => { this.changeCheckbox(); });
       this.changeCheckbox();
     }
-    else
-    {
+    else {
       console.log("straddle from API");
       let observable$: Observable<SdlChn> = this.data.getStraddle(this.tickerObj.Ticker);
       observable$.subscribe(
         response => {
           this.chain = response;
-          if (!this.chain || this.chain.straddles.length==0)
-          {
-            this.hasError=true;
+          if (!this.chain || this.chain.straddles.length == 0) {
+            this.hasError = true;
             this.errorMsg = `No data returned for ticker ${this.tickerObj.Ticker}`;
           }
-          if (!this.hasError)
-          {
+          if (!this.hasError) {
             this.state.setStraddleObj(this.chain);
-            this.initializeMaturity();  
+            this.initializeMaturity();
             this.bindForm();
 
             this.maturities = this.utils.distinctMaturityStraddle(this.chain.straddles);
             this.maturityForm.valueChanges
-              .subscribe(content=>{ this.changeCheckbox(); });
+              .subscribe(content => { this.changeCheckbox(); });
             this.changeCheckbox();
           }
         },
         error => {
-          this.hasError=true;
+          this.hasError = true;
           this.errorMsg = `Server Error getting data for ${this.tickerObj.Ticker}`;
           //this.data.postMessage(this.errorMsg, error.message);
         });
     }
   }
 
-  @HostListener('window:scroll', ['$event']) getScrollHeight(event) {
-    //console.log(window.pageYOffset, event);
-
-    if (window.pageYOffset>=100) this.hasScrolledPast1=true;
-    if (window.pageYOffset>=500) this.hasScrolledPast2=true;
-    if (window.pageYOffset>=1000) this.hasScrolledPast3=true;
-
-    //console.log("window.pageYOffset="+window.pageYOffset
-    //  +"  hasScrolledPast1="+this.hasScrolledPast1
-    //  +"  hasScrolledPast2="+this.hasScrolledPast2
-    //  +"  hasScrolledPast3="+this.hasScrolledPast3);
-  }
-
   onKeydown(event) {
     if (event.key === "Enter") {
       this.onSubmit(event);
     }
-  }   
-  
+  }
+
   onSubmit(event) {
     let ticker: string = this.tickerForm.controls["formTicker"].value;
     this.changeTicker(ticker);
@@ -141,7 +133,7 @@ export class StackedComponent implements OnInit {
 
   onSearch(event) {
     let url: string = "https://www.schwab.wallst.com/research/Client/Content/Documents/SchwabSymbolLookup.html?criteria=CGK&filter=STK,MFD,ETF,BND,PFD,IDX&newsite=y&callbackDomains=client,y%7Cclient,y&ResourceKey=DetailQuote&site=DWT&fieldId=ccSymbolInput&invoker=68747470733A2F2F7777772E7363687761622E77616C6C73742E636F6D2F72657365617263682F436C69656E742F53796D626F6C2F496E76616C696453796D626F6C3F5858583130335F4E634E645078476E55684C48493561486B354C30767856436251474E656A74766B5077555038673477356C754E2F4750316278642B394365785461372B2F4F4C4833563051672F794A7938485665316956466161466E5246355856464D786B6155596F39392B707730523151674969466F4F4F2F4F305977384D662F2F2F46364C4D436359764F343946476C3739365A6D79562B333434487A77545042624C552F756D3134646A6E6E585766577750726E7055536B41566C77304277552B57483175316446436D5764714C626A58624372657A3058413D3D2670333D592673796D626F6C3D43474B265F50433D495241";
-    window.open(url, "_blank");
+    if (isPlatformBrowser(this.platformId)) { window.open(url, "_blank"); }
   }
 
   onClickDebug(event) {
@@ -162,13 +154,13 @@ export class StackedComponent implements OnInit {
     this.tickerForm.controls["formTicker"].setValue(this.tickerObj.Ticker);
     this.tickerForm.controls["formMaturity"].setValue(this.tickerObj.MaturityString);
   }
-  
+
   createFormMaturity(): void {
     this.logTickerObj("createFormMaturity");
     this.maturityForm = new FormGroup({});
     for (let i: number = 0; i < 100; i++) {
       this.maturityForm.addControl(i.toString(), new FormControl());
-	    if (i<3) this.maturityForm.controls[i.toString()].setValue(true);
+      if (i < 3) this.maturityForm.controls[i.toString()].setValue(true);
     }
   }
 
@@ -180,11 +172,9 @@ export class StackedComponent implements OnInit {
     let maturityStr: string = this.tickerObj.Maturities[0];
 
     // if the ticker object already has an expiration, validate and use it
-    if(this.tickerObj.Maturity)
-    {
+    if (this.tickerObj.Maturity) {
       let m: string = this.utils.FormatDate(this.tickerObj.Maturity, "MM/dd/yyyy");
-      if(this.utils.validateMaturity(this.tickerObj.Maturities, m))
-      {
+      if (this.utils.validateMaturity(this.tickerObj.Maturities, m)) {
         maturityStr = m;
       }
     }
@@ -193,13 +183,12 @@ export class StackedComponent implements OnInit {
     this.tickerObj.Maturity = this.utils.ParseDate(maturityStr);
   }
 
-  changeTicker(ticker: string)
-  {
-    this.redirect("stacked", ticker);    
+  changeTicker(ticker: string) {
+    this.redirect("stacked", ticker);
   }
 
   changeMaturity(maturityStr: string): boolean {
-    if(!maturityStr) return false;
+    if (!maturityStr) return false;
 
     this.logTickerObj("changeMaturity");
 
@@ -211,22 +200,18 @@ export class StackedComponent implements OnInit {
     //this.tickerObjJson = JSON.stringify(this.tickerObj);
 
     return true;
-  } 
+  }
 
 
-  public changeCheckbox()
-  {
+  public changeCheckbox() {
     let m: Array<string> = Array<string>();
-    for (let i: number = 0; i < this.maturities.length; i++)
-    {
-      if (this.maturityForm.get(i.toString()).value==true)
-      {
+    for (let i: number = 0; i < this.maturities.length; i++) {
+      if (this.maturityForm.get(i.toString()).value == true) {
         m.push(this.maturities[i]);
       }
     }
 
-    if(m.length!=0)
-    {
+    if (m.length != 0) {
       this.filtered = new SdlChn(this.chain);
       this.filtered.straddles = this.filterStraddle(this.filtered.straddles, m);
 
@@ -235,37 +220,31 @@ export class StackedComponent implements OnInit {
     }
   }
 
-  public filterStraddle(straddles : Array<Sdl>, maturities: Array<string>): Array<Sdl>
-  {
+  public filterStraddle(straddles: Array<Sdl>, maturities: Array<string>): Array<Sdl> {
     let result: Array<Sdl> = [];
-    for (let s of straddles) 
-    {
+    for (let s of straddles) {
       let straddle: Sdl = <Sdl>s;
-      for (let m of maturities)
-      {
+      for (let m of maturities) {
         let maturity: string = <string>m;
-        if(straddle.mstr==maturity)
-        {
+        if (straddle.mstr == maturity) {
           result.push(straddle);
         }
       }
-    } 
-    return result;   
+    }
+    return result;
   }
 
-  redirect(path: string, params: string)
-  {
+  redirect(path: string, params: string) {
     this.route.navigate(['/', path, params], { relativeTo: this.actRoute }).then(e => {
       if (e) {
         //console.log("Navigation is successful!");
       } else {
         //console.log("Navigation has failed!");
       }
-    });    
+    });
   }
 
-  logTickerObj(description:string): void
-  {
+  logTickerObj(description: string): void {
     /*
     let content: string = description+":"
       +" Ticker= "+this.tickerObj.Ticker
@@ -274,5 +253,5 @@ export class StackedComponent implements OnInit {
     if (this.tickerObj.JsonData) content += " JsonData= " + this.tickerObj.JsonData.substr(0,10);
     console.log(content);
     */
-  }    
+  }
 }

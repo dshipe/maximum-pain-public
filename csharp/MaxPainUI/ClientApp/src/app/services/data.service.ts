@@ -8,10 +8,10 @@ import { Buffer } from "buffer";
 import { UtilsService } from './utils.service';
 import { StateService } from './state.service';
 import { SdlChn, Sdl } from '../models/straddle';
-import { MPChn, MPItem } from '../models/MaxPainItem';
+import { MPChn, MPItem } from '../models/maxpainitem';
 import { MostActive } from '../models/most-active';
-import { OutsideOIWall } from '../models/OutsideOIWall';
-import { Spread } from '../models/Spread';
+import { OutsideOIWall } from '../models/outsideoiwall';
+import { Spread } from '../models/spread';
 import { ChartInfo } from "../models/chart-info";
 import { MaxpainHistory } from '../models/maxpain-history';
 import { EmailMessage } from '../models/email-message';
@@ -24,6 +24,7 @@ import { CupWithHandleHistory } from "../models/cup-with-handle-history";
 import { DailyScan } from "../models/daily-scan";
 import { MarketDirection } from "../models/market-direction";
 import { ServerDetails } from "../models/server-details";
+import { Daily } from '../models/daily';
 
 declare var window: any; // Needed on Angular 8+
 
@@ -383,6 +384,18 @@ export class DataService {
 
   // ********* ********* ********* ********* *********
   // python
+  getDaily(tickers: string): Observable<Array<Daily>>  {
+    let u = this.lambaUrl + "/api/python/Daily?tickers=" + encodeURIComponent(tickers)
+    return this.http.get<Array<Daily>>(u)
+      .pipe(map((response: Array<Daily>) => response));
+  }
+
+  getTickerDataForDateRange(ticker: string, startDate: string, numDays: number): Observable<any>  {
+    let u = this.lambaUrl + "/api/python/Daily?tickers=" + encodeURIComponent(ticker) + "&startDate=" + encodeURIComponent(startDate) + "&numDays=" + numDays;
+    return this.http.get<any>(u)
+      .pipe(map((response: any) => response));
+  }
+
   getCupWithHandleHistory(midnight: string): Observable<Array<CupWithHandleHistory>>  {
     let u = this.lambaUrl + "/api/python/CupWithHandleHistory?midnight=";
     if(midnight && midnight.length>0)

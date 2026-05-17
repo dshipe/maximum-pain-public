@@ -1,9 +1,11 @@
-import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges } from '@angular/core';
+import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
 import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
 import { takeUntil, switchMap, tap, map } from 'rxjs/operators'
 import { ActivatedRoute, Router} from '@angular/router';
 import { Title } from "@angular/platform-browser";
+import { SeoService } from '../services/seo.service';
 
 import { DataService } from '../services/data.service';
 import { UtilsService } from '../services/utils.service';
@@ -34,7 +36,9 @@ export class SpreadComponent implements OnInit {
     private actRoute: ActivatedRoute,
     private route: Router,
     private utils: UtilsService,
-    private title: Title) {
+    private title: Title,
+    private seo: SeoService,
+    @Inject(PLATFORM_ID) private platformId: Object) {
 
     // override the route reuse strategy
     this.route.routeReuseStrategy.shouldReuseRoute = function () {
@@ -43,30 +47,14 @@ export class SpreadComponent implements OnInit {
   }
 
   ngOnInit() {
+    if (!isPlatformBrowser(this.platformId)) { return; }
+
     this.tickerObj.Ticker = this.actRoute.snapshot.params.id;
-    this.title.setTitle(this.tickerObj.Ticker + " Spreads");
+    this.seo.updateTickerSeo(this.tickerObj.Ticker, 'spreads');
 
     this.actRoute.queryParams.subscribe(params => {
       this.tickerObj.Maturity = this.utils.ParseDateDelimiter(params["m"], "-");
     });
-  }
-
-  ngAfterViewInit() {
-    /*
-    let observable$: Observable<Array<Spread>> = 
-      this.data.getSpreads(this.tickerObj.Ticker);
-    observable$.subscribe(response => {
-      this.spreads = response;
-
-      if (this.spreads == null || this.spreads.length == 0) {
-        this.isEmpty = true;
-        this.spreads = [];
-      }
-      else {
-        this.loadMaturity();
-      }
-    });
-    */
   }
 
   onKeydown(event) {

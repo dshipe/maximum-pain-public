@@ -20,17 +20,20 @@ namespace MaxPainInfrastructure.Code
         public static async Task<string> FetchJson(DatabaseFacade db, string sql, List<SqlParameter>? parms, int timeout = 30)
         {
             DataTable dt = new DataTable();
-            using (var command = db.GetDbConnection().CreateCommand())
+            var conn = db.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                await conn.OpenAsync();
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = sql;
                 command.CommandTimeout = timeout;
                 if (parms != null)
                 {
-                    command.Parameters.AddRange(parms.ToArray());
+                    foreach (var p in parms)
+                        command.Parameters.Add(p);
                 }
 
-                await db.OpenConnectionAsync();
-                using (var reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection))
+                using (var reader = await command.ExecuteReaderAsync())
                 {
                     dt.Load(reader);
                 }
@@ -42,17 +45,20 @@ namespace MaxPainInfrastructure.Code
         public static async Task<List<T>> FetchModel<T>(DatabaseFacade db, string sql, List<SqlParameter>? parms, int timeout = 30)
         {
             List<T> list = new List<T>();
-            using (var command = db.GetDbConnection().CreateCommand())
+            var conn = db.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                await conn.OpenAsync();
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = sql;
                 command.CommandTimeout = timeout;
                 if (parms != null)
                 {
-                    command.Parameters.AddRange(parms.ToArray());
+                    foreach (var p in parms)
+                        command.Parameters.Add(p);
                 }
 
-                await db.OpenConnectionAsync();
-                using (var reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection))
+                using (var reader = await command.ExecuteReaderAsync())
                 {
                     list = DataReaderMapToList<T>(reader);
                 }
@@ -70,16 +76,19 @@ namespace MaxPainInfrastructure.Code
         public static async Task<object> FetchScalar(DatabaseFacade db, string sql, List<SqlParameter>? parms, string fieldName)
         {
             object? result = null;
-            using (var command = db.GetDbConnection().CreateCommand())
+            var conn = db.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                await conn.OpenAsync();
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = sql;
                 if (parms != null)
                 {
-                    command.Parameters.AddRange(parms.ToArray());
+                    foreach (var p in parms)
+                        command.Parameters.Add(p);
                 }
 
-                await db.OpenConnectionAsync();
-                using (var reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection))
+                using (var reader = await command.ExecuteReaderAsync())
                 {
                     if (await reader.ReadAsync())
                     {
@@ -92,16 +101,19 @@ namespace MaxPainInfrastructure.Code
 
         public static async Task<bool> Execute(DatabaseFacade db, string sql, List<SqlParameter>? parms, int timeout = 30)
         {
-            using (var command = db.GetDbConnection().CreateCommand())
+            var conn = db.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                await conn.OpenAsync();
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = sql;
                 command.CommandTimeout = timeout;
                 if (parms != null)
                 {
-                    command.Parameters.AddRange(parms.ToArray());
+                    foreach (var p in parms)
+                        command.Parameters.Add(p);
                 }
 
-                await db.OpenConnectionAsync();
                 await command.ExecuteNonQueryAsync();
             }
             return true;
@@ -110,20 +122,27 @@ namespace MaxPainInfrastructure.Code
         public static List<T> DataReaderMapToList<T>(IDataReader dr)
         {
             List<T> list = new List<T>();
-            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            var columnNames = dr.GetSchemaTable().Rows.Cast<DataRow>().Select(row => row["ColumnName"].ToString()).ToList();
-
-            while (dr.Read())
+            if (!dr.IsClosed && dr.FieldCount > 0)
             {
-                T obj = Activator.CreateInstance<T>();
-                foreach (var prop in properties)
+                var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                var columnNames = new List<string>();
+                for (int i = 0; i < dr.FieldCount; i++)
                 {
-                    if (columnNames.Contains(prop.Name) && !object.Equals(dr[prop.Name], DBNull.Value))
-                    {
-                        prop.SetValue(obj, dr[prop.Name]);
-                    }
+                    columnNames.Add(dr.GetName(i));
                 }
-                list.Add(obj);
+
+                while (dr.Read())
+                {
+                    T obj = Activator.CreateInstance<T>();
+                    foreach (var prop in properties)
+                    {
+                        if (columnNames.Contains(prop.Name) && !object.Equals(dr[prop.Name], DBNull.Value))
+                        {
+                            prop.SetValue(obj, dr[prop.Name]);
+                        }
+                    }
+                    list.Add(obj);
+                }
             }
             return list;
         }

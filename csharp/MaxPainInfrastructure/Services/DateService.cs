@@ -83,20 +83,5 @@
             long unixTimeStampInTicks = (dateTime.ToUniversalTime() - unixStart).Ticks;
             return (double)unixTimeStampInTicks / TimeSpan.TicksPerSecond;
         }
-
-        private DateTime LocalToEST(DateTime localTime)
-        {
-            /*
-            DateTime zoneTime = DateTime.SpecifyKind(localTime, DateTimeKind.Local);
-            TimeZoneInfo easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-            DateTime easternTime = TimeZoneInfo.ConvertTimeFromUtc(zoneTime, easternZone);
-            */
-
-            DateTime dt = DateTime.SpecifyKind(localTime, DateTimeKind.Unspecified);
-            TimeZoneInfo easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-            DateTime easternTime = TimeZoneInfo.ConvertTimeFromUtc(dt, easternZone);
-
-            return easternTime;
-        }
     }
 }

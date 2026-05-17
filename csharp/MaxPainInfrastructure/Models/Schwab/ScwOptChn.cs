@@ -2,17 +2,17 @@
 {
     public class ScwOptChn
     {
-        public string stock { get; set; }
+        public string? stock { get; set; }
         public float price { get; set; }
         public float interestRate { get; set; }
         public float volatility { get; set; }
-        public ScwOpt[] options { get; set; }
+        public ScwOpt[]? options { get; set; }
     }
 
     public class ScwOpt
     {
         //public string putCall { get; set; }
-        public string symbol { get; set; }
+        public string? symbol { get; set; }
         //public string description { get; set; }
         //public string exchangeName { get; set; }
         public float bid { get; set; }
@@ -67,8 +67,8 @@
 
     public class ScwOptiondeliverableslist
     {
-        public string symbol { get; set; }
-        public string assetType { get; set; }
+        public string? symbol { get; set; }
+        public string? assetType { get; set; }
         public float deliverableUnits { get; set; }
     }
 

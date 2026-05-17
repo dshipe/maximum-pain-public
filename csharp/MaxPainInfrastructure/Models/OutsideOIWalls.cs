@@ -3,8 +3,8 @@
     public class OutsideOIWalls
     {
         public int Id { get; set; }
-        public string Ticker { get; set; }
-        public string Maturity { get; set; }
+        public string? Ticker { get; set; }
+        public string? Maturity { get; set; }
         public bool IsMonthlyExp { get; set; }
         public int SumOI { get; set; }
         public int PutOI { get; set; }

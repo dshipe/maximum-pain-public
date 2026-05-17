@@ -23,13 +23,13 @@ namespace MaxPainInfrastructure.Models
         public QueryType Type { get; set; }
 
         [Required]
-        public string Ticker { get; set; }
+        public string? Ticker { get; set; }
         [Required]
         public DateTime Maturity { get; set; }
         [Required]
         public decimal Strike { get; set; }
         [Required]
-        public string CallPut { get; set; }
+        public string? CallPut { get; set; }
 
         public int? OpenInterest { get; set; }
         public int? PrevOpenInterest { get; set; }
@@ -45,7 +45,7 @@ namespace MaxPainInfrastructure.Models
 
         public DateTime CreatedOn { get; set; }
         public bool NextMaturity { get; set; }
-        public string QueryType { get; set; }
+        public string? QueryType { get; set; }
 
         public decimal ChangeOpenInterest { get; set; }
         public decimal ChangeVolume { get; set; }

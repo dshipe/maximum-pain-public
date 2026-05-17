@@ -4,9 +4,9 @@
     using System.Collections.Generic;
     public class OptionChain
     {
-        public string Symbol { get; set; }
-        public string Status { get; set; }
-        public string Strategy { get; set; }
+        public string? Symbol { get; set; }
+        public string? Status { get; set; }
+        public string? Strategy { get; set; }
         public double Interval { get; set; }
         public bool IsDelayed { get; set; }
         public bool IsIndex { get; set; }
@@ -15,26 +15,26 @@
         public double Volatility { get; set; }
         public double DaysToExpiration { get; set; }
         public int NumberOfContracts { get; set; }
-        public string AssetMainType { get; set; }
-        public string AssetSubType { get; set; }
+        public string? AssetMainType { get; set; }
+        public string? AssetSubType { get; set; }
         public bool IsChainTruncated { get; set; }
-        public Dictionary<string, Dictionary<string, List<Option>>> CallExpDateMap { get; set; }
-        public Dictionary<string, Dictionary<string, List<Option>>> PutExpDateMap { get; set; }
+        public Dictionary<string, Dictionary<string, List<Option>>>? CallExpDateMap { get; set; }
+        public Dictionary<string, Dictionary<string, List<Option>>>? PutExpDateMap { get; set; }
     }
 
     public class Option
     {
-        public string PutCall { get; set; }
-        public string Symbol { get; set; }
-        public string Description { get; set; }
-        public string ExchangeName { get; set; }
+        public string? PutCall { get; set; }
+        public string? Symbol { get; set; }
+        public string? Description { get; set; }
+        public string? ExchangeName { get; set; }
         public double Bid { get; set; }
         public double Ask { get; set; }
         public double Last { get; set; }
         public double Mark { get; set; }
         public int BidSize { get; set; }
         public int AskSize { get; set; }
-        public string BidAskSize { get; set; }
+        public string? BidAskSize { get; set; }
         public int LastSize { get; set; }
         public double HighPrice { get; set; }
         public double LowPrice { get; set; }
@@ -58,18 +58,18 @@
         public double StrikePrice { get; set; }
         public DateTime ExpirationDate { get; set; }
         public int DaysToExpiration { get; set; }
-        public string ExpirationType { get; set; }
+        public string? ExpirationType { get; set; }
         public long LastTradingDay { get; set; }
         public double Multiplier { get; set; }
-        public string SettlementType { get; set; }
-        public string DeliverableNote { get; set; }
+        public string? SettlementType { get; set; }
+        public string? DeliverableNote { get; set; }
         public double PercentChange { get; set; }
         public double MarkChange { get; set; }
         public double MarkPercentChange { get; set; }
         public double IntrinsicValue { get; set; }
         public double ExtrinsicValue { get; set; }
-        public string OptionRoot { get; set; }
-        public string ExerciseType { get; set; }
+        public string? OptionRoot { get; set; }
+        public string? ExerciseType { get; set; }
         public double High52Week { get; set; }
         public double Low52Week { get; set; }
         public bool NonStandard { get; set; }
@@ -80,8 +80,8 @@
 
     public class OptionDeliverable
     {
-        public string Symbol { get; set; }
-        public string AssetType { get; set; }
+        public string? Symbol { get; set; }
+        public string? AssetType { get; set; }
         public double DeliverableUnits { get; set; }
     }
 }

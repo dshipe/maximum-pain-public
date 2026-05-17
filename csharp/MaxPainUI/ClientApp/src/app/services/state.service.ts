@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router'
 
 
@@ -12,7 +13,7 @@ export class StateService {
   private tickerKey: string = "tickerObj";
   private straddleKey: string = "straddleObj";
 
-  constructor() { }
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) { }
 
   initialize(actRoute: ActivatedRoute, utils: UtilsService): Ticker {
     // the default
@@ -74,18 +75,19 @@ export class StateService {
   }
 
   setString(key: string, content: string): void {
-    localStorage.setItem(key, content);
+    if (isPlatformBrowser(this.platformId)) { localStorage.setItem(key, content); }
   }
 
   getString(key: string): string {
-    return localStorage.getItem(key);
+    if (isPlatformBrowser(this.platformId)) { return localStorage.getItem(key); }
+    return null;
   }  
 
-  remove(key: string) {
-    localStorage.removeItem(key);
+  remove(key: string): void {
+    if (isPlatformBrowser(this.platformId)) { localStorage.removeItem(key); }
   }
 
-  clear() {
-    localStorage.clear()
+  clear(): void {
+    if (isPlatformBrowser(this.platformId)) { localStorage.clear(); }
   }
 }

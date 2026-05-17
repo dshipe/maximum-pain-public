@@ -14,25 +14,46 @@
             "outputPath": "dist/",
             "index": "src/index.html",
             "main": "src/main.ts",
-            "tsConfig": "src/tsconfig.app.json",
-            "progress": true,
-            "polyfills": "src/polyfills.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/assets",
               {
-                "glob": "*",
-                "input": "wwwroot/wwwroot",
-                "output": ""
+                "glob": "**/*",
+                "input": "src/assets/html",
+                "output": "/html"
               },
               {
-                "glob": "*",
-                "input": "wwwroot/html",
-                "output": "html"
+                "glob": "**/*",
+                "input": "src/assets/images",
+                "output": "/assets"
               },
               {
-                "glob": "*",
-                "input": "wwwroot/images",
-                "output": "images"
+                "glob": "ads.txt",
+                "input": "src/assets",
+                "output": "/"
+              },
+              {
+                "glob": "favicon.ico",
+                "input": "src/assets",
+                "output": "/"
+              },
+              {
+                "glob": "robots.txt",
+                "input": "src/assets",
+                "output": "/"
+              },
+              {
+                "glob": "google567ce9c214c28476.html",
+                "input": "src/assets",
+                "output": "/"
+              },
+              {
+                "glob": "google-sitemap.xml",
+                "input": "src/assets",
+                "output": "/"
               }
             ],
             "styles": [
@@ -97,8 +118,10 @@
           "options": {
             "main": "src/test.ts",
             "karmaConfig": "./karma.conf.js",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "tsconfig.spec.json",
             "scripts": [],
             "styles": [
               "src/styles.scss",
@@ -112,6 +135,41 @@
               "src/google567ce9c214c28476.html",
               "src/ads.txt"
             ]
+          }
+        },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/server",
+            "main": "src/main.server.ts",
+            "tsConfig": "tsconfig.server.json"
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "media",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "prerender": {
+          "builder": "@angular-devkit/build-angular:prerender",
+          "options": {
+            "browserTarget": "MaxPainAPI:build",
+            "serverTarget": "MaxPainAPI:server",
+            "routesFile": "prerender-routes.txt",
+            "discoverRoutes": false
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "MaxPainAPI:build:production",
+              "serverTarget": "MaxPainAPI:server:production",
+              "discoverRoutes": false
+            }
           }
         }
       }
@@ -131,7 +189,6 @@
       }
     }
   },
-  "defaultProject": "MaxPainAPI",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",
@@ -140,5 +197,8 @@
     "@schematics/angular:directive": {
       "prefix": "app"
     }
+  },
+  "cli": {
+    "analytics": "82b0ae6a-0c49-4d98-a70b-0edfa68d381d"
   }
 }

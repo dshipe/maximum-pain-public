@@ -100,26 +100,30 @@
 
     <div class="row">
       <div class="col-12">
-        <app-chart apiName="StackedPost" title="Call Open Interest" key="Open Interest" json="{{tickerObjJson}}">
-        </app-chart>
+        @defer (on viewport) {
+          <app-chart apiName="StackedPost" title="Call Open Interest" key="Open Interest" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">
       <div class="col-12">
-        <app-chart apiName="StackedPost" title="Put Open Interest" key="Open Interest" json="{{tickerObjJson}}">
-        </app-chart>
+        @defer (on viewport) {
+          <app-chart apiName="StackedPost" title="Put Open Interest" key="Open Interest" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">
       <div class="col-12">
-        <app-chart apiName="StackedPost" title="Call Volume" key="Volume" json="{{tickerObjJson}}">
-        </app-chart>
+        @defer (on viewport) {
+          <app-chart apiName="StackedPost" title="Call Volume" key="Volume" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">
       <div class="col-12">
-        <app-chart apiName="StackedPost" title="Put Volume" key="Volume" json="{{tickerObjJson}}">
-        </app-chart>
+        @defer (on viewport) {
+          <app-chart apiName="StackedPost" title="Put Volume" key="Volume" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">

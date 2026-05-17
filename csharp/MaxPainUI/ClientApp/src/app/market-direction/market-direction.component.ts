@@ -1,9 +1,11 @@
-import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges, HostListener } from '@angular/core';
+import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges, HostListener, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
 import { takeUntil, switchMap, tap, map } from 'rxjs/operators'
 import { Title } from "@angular/platform-browser";
+import { SeoService } from '../services/seo.service';
 
 import { DataService } from '../services/data.service';
 import { UtilsService } from '../services/utils.service';
@@ -20,7 +22,7 @@ export class MarketDirectionComponent implements OnInit {
   public directions: Array<MarketDirection>;
   public maturities: Array<string>;
 
-  public tickerForm: FormGroup;
+  public tickerForm: FormGroup = new FormGroup({})
   public hasError: boolean = false;
   public errorMsg: string;
 
@@ -33,8 +35,11 @@ export class MarketDirectionComponent implements OnInit {
     private data: DataService,
     private utils: UtilsService,
     private state: StateService,
-    private title: Title) { 
+    private title: Title,
+    private seo: SeoService,
+    @Inject(PLATFORM_ID) private platformId: Object) { 
           
+        this.createForm(); // initialize form before template binding (SSR safe)
     // override the route reuse strategy
     this.route.routeReuseStrategy.shouldReuseRoute = function() {
       return false;
@@ -42,9 +47,16 @@ export class MarketDirectionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.title.setTitle("Daily Scan");
-
+    this.seo.updateMetaTags({
+      title: 'Market Direction Indicator | Maximum-Pain.com',
+      description: 'Options-based market direction analysis. See where open interest positioning expects the market to move.',
+      url: 'https://maximum-pain.com/market-direction'
+    })
     this.createForm();
+
+    // Skip API calls during SSR — prerender only needs SEO metadata
+    if (!isPlatformBrowser(this.platformId)) { return; }
+
     this.tickerForm.get('formMaturity').valueChanges
       .subscribe(content=>{
       })

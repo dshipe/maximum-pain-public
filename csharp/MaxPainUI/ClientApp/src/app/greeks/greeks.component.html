@@ -68,52 +68,44 @@
   <ng-template [ngIf]="!hasError">
     <div class="row">
       <div class="col-12">
-        <div>
-          <app-chart apiName="LineDoublePost" title="Delta" key="Delta" json="{{tickerObjJson}}">
-          </app-chart>
-        </div>
+        @defer (on viewport) {
+          <app-chart apiName="LineDoublePost" title="Delta" key="Delta" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">
       <div class="col-12">
-        <div *ngIf="hasScrolledPast1">
-          <app-chart apiName="LineDoublePost" title="Gamma" key="Gamma" json="{{tickerObjJson}}">
-          </app-chart>
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-12">
-        <div *ngIf="hasScrolledPast2">
-          <app-chart apiName="LineDoublePost" title="Theta" key="Theta" json="{{tickerObjJson}}">
-          </app-chart>
-        </div>
+        @defer (on viewport) {
+          <app-chart apiName="LineDoublePost" title="Gamma" key="Gamma" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">
       <div class="col-12">
-        <div *ngIf="hasScrolledPast3">
-          <app-chart apiName="LineDoublePost" title="Vega" key="Vega" json="{{tickerObjJson}}">
-          </app-chart>
-        </div>
+        @defer (on viewport) {
+          <app-chart apiName="LineDoublePost" title="Theta" key="Theta" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">
       <div class="col-12">
-        <div *ngIf="hasScrolledPast3">
-          <app-chart apiName="LineDoublePost" title="Rho" key="Rho" json="{{tickerObjJson}}">
-          </app-chart>
-        </div>
+        @defer (on viewport) {
+          <app-chart apiName="LineDoublePost" title="Vega" key="Vega" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
-
     <div class="row">
       <div class="col-12">
-        <div *ngIf="hasScrolledPast3">
-          <app-chart apiName="LineSinglePost" title="Gamma Differential" key="ga0" json="{{tickerObjJson}}">
-          </app-chart>
-        </div>
+        @defer (on viewport) {
+          <app-chart apiName="LineDoublePost" title="Rho" key="Rho" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        @defer (on viewport) {
+          <app-chart apiName="LineSinglePost" title="Gamma Differential" key="ga0" json="{{tickerObjJson}}"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
 

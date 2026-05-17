@@ -2,9 +2,9 @@
 {
     public class OptionHistory
     {
-        public string TK { get; set; }
+        public string? TK { get; set; }
         public DateTime M { get; set; }
-        public string TY { get; set; }
+        public string? TY { get; set; }
         public decimal S { get; set; }
         public decimal OP { get; set; }
         public decimal SP { get; set; }
@@ -16,7 +16,7 @@
 
     public class OptionHistoryStraddle
     {
-        public string TK { get; set; }
+        public string? TK { get; set; }
         public DateTime M { get; set; }
         public decimal S { get; set; }
         public decimal SP { get; set; }

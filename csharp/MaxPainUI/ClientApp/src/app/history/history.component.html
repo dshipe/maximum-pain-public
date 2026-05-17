@@ -76,24 +76,23 @@
   <ng-template [ngIf]="!hasError">
     <div class="row">
       <div class="col-12">
-        <app-chart apiName="HistoryDoublePost" title="Price History" key="Price" json="{{tickerObjJson}}" hideZoom="true">
-        </app-chart>
+        @defer (on viewport) {
+          <app-chart apiName="HistoryDoublePost" title="Price History" key="Price" json="{{tickerObjJson}}" hideZoom="true"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">
       <div class="col-12">
-        <div *ngIf="hasScrolledPast1">
-          <app-chart apiName="HistoryDoublePost" title="Open Interest History" key="Open Interest" json="{{tickerObjJson}}" hideZoom="true">
-          </app-chart>
-        </div>
+        @defer (on viewport) {
+          <app-chart apiName="HistoryDoublePost" title="Open Interest History" key="Open Interest" json="{{tickerObjJson}}" hideZoom="true"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
     <div class="row">
       <div class="col-12">
-        <div *ngIf="hasScrolledPast2">
-          <app-chart apiName="HistoryDoublePost" title="Volume History" key="Volume" json="{{tickerObjJson}}" hideZoom="true">
-          </app-chart>
-        </div>
+        @defer (on viewport) {
+          <app-chart apiName="HistoryDoublePost" title="Volume History" key="Volume" json="{{tickerObjJson}}" hideZoom="true"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
 
@@ -145,10 +144,9 @@
 
     <div class="row">
       <div class="col-12">
-        <div *ngIf="hasScrolledPast3">
-          <app-chart apiName="HistoryMaxpainPost" title="Max Pain History" key="" json="{{histories | json}}" hideZoom="true">
-          </app-chart>
-        </div>
+        @defer (on viewport) {
+          <app-chart apiName="HistoryMaxpainPost" title="Max Pain History" key="" json="{{histories | json}}" hideZoom="true"></app-chart>
+        } @placeholder { <div style="min-height:200px"></div> }
       </div>
     </div>
 

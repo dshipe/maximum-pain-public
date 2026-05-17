@@ -208,7 +208,7 @@ namespace UnitTestProject1
         {
             await RefreshToken();
             var result = await SchwabSvc.IsMarketOpen(_token.access_token, DateTime.Now);
-            Assert.AreEqual(true, result);
+            Assert.IsTrue(result);
         }
 
         [TestMethod]

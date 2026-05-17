@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router'
 import { DataService } from '../../services/data.service';
 import { UtilsService } from '../../services/utils.service';
-import { UserTweet } from "../../models/UserTweet";
+import { UserTweet } from "../../models/usertweet";
 
 @Component( {
   selector: 'app-user-tweets',

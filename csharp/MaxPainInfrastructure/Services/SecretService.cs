@@ -12,11 +12,10 @@ namespace MaxPainInfrastructure.Services
         {
         }
 
-        private async Task<string> ReadAWSSecret()
+        private async Task<string?> ReadAWSSecret()
         {
             try
             {
-                string secretName = "maximum-pain";
                 string region = "us-east-1";
 
                 var client = new AmazonSecretsManagerClient(RegionEndpoint.GetBySystemName(region));
@@ -33,7 +32,7 @@ namespace MaxPainInfrastructure.Services
 
                 return response.SecretString;
             }
-            catch (Exception e)
+            catch
             {
                 // do nothing
             }
@@ -43,7 +42,7 @@ namespace MaxPainInfrastructure.Services
 
         public async Task<string> GetValue(string key)
         {
-            string json = await ReadAWSSecret();
+            string? json = await ReadAWSSecret();
             if (String.IsNullOrEmpty(json))
             {
                 json = GetEmbeddedFile("secret.json");
@@ -63,7 +62,7 @@ namespace MaxPainInfrastructure.Services
             return dict[key];
         }
 
-        private string GetEmbeddedFile(string filename)
+        private string? GetEmbeddedFile(string filename)
         {
             try
             {
@@ -77,7 +76,7 @@ namespace MaxPainInfrastructure.Services
                     return reader.ReadToEnd();
                 }
             }
-            catch (Exception e)
+            catch
             {
                 // do nothing
             }

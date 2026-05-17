@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaxPainInfrastructure", "..
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MaxPainAPI_ImportOnly", "MaxPainAPI_ImportOnly.csproj", "{0A356544-30AB-4CB8-8E9E-7BC14314FFEE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProject1", "..\UnitTestProject1\UnitTestProject1.csproj", "{861F71C5-0517-5F9E-1845-9BE3A83D21CD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{0A356544-30AB-4CB8-8E9E-7BC14314FFEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A356544-30AB-4CB8-8E9E-7BC14314FFEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A356544-30AB-4CB8-8E9E-7BC14314FFEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{861F71C5-0517-5F9E-1845-9BE3A83D21CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{861F71C5-0517-5F9E-1845-9BE3A83D21CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{861F71C5-0517-5F9E-1845-9BE3A83D21CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{861F71C5-0517-5F9E-1845-9BE3A83D21CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

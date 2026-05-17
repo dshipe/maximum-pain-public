@@ -2,30 +2,42 @@ import { Data } from "@angular/router";
 
 export class DailyScan{
   id: number;
-  ticker: string;
-  source: string;
-  currentPrice: number;
-  rsRating: number; 
-  sma10Day: number; 
-  sma20Day: number; 
-  sma50Day: number; 
-  sma150Day: number; 
-  sma200Day: number; 
-  week52Low: number; 
-  week52High: number; 
-  volume: number;
-  volume20: number;
-  volumePerc: number;
   adr: number;
+  base64: string;
   bbUpper: number;
   bbMiddle: number;
   bbLower: number;
   bbw: number;
-  date: Date;
   createdOn: Date;
-  base64: string;
-  progressCurrentPrice: Date;
+  date: Date;
+  flagAtrDrop: boolean;
+  flagFlatChannel: boolean;
+  flagHigherLows: boolean;
+  flagMovingAverages: boolean;
+  flagPricePattern: boolean;
+  flagVolumeRequirements: boolean;
+  flagMarketCap: boolean;
+  flagAvoidGapDown: boolean;
+  flagRsiMomentum: boolean;
+  hasAlerted: boolean;
+  model: string;
+  price: number;
+  currentPrice: number;
   progressBase64: string;
+  progressCurrentPrice: number;
   progressModifiedOn: Date;
-  watchFlag: boolean
+  progressPercent: number;
+  rsi: number;
+  sector: string;
+  source: string;
+  ticker: string;
+  volume: number;
+  volume20: number;
+  watchFlag: boolean;
+
+  constructor(jsonObj: any) {
+    Object.keys(jsonObj).map((key) => { this[key] = jsonObj[key] });
+    this.progressPercent = this.progressCurrentPrice && this.price ? 
+      (this.progressCurrentPrice - this.price) / this.price * 100 : 0;
+  }
 }

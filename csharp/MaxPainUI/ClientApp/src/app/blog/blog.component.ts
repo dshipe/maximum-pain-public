@@ -1,4 +1,6 @@
-import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges } from '@angular/core';
+
+import { isPlatformBrowser } from '@angular/common';
+import { AfterViewInit, OnInit, Input, Component, ElementRef, ViewChild, SimpleChanges, Inject, PLATFORM_ID } from '@angular/core';
 import { FormGroup, FormBuilder, FormControl, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Subject, Observable, forkJoin, Subscription } from 'rxjs'
@@ -8,6 +10,7 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 
 import { DataService } from '../services/data.service';
 import { UtilsService } from '../services/utils.service';
+import { SeoService } from '../services/seo.service';
 import { BlogEntry } from "../models/blog-entry";
 
 @Component( {
@@ -15,7 +18,7 @@ import { BlogEntry } from "../models/blog-entry";
   templateUrl: './blog.component.html',
   styleUrls: ['./blog.component.scss']
 })
-export class BlogComponent implements OnInit {
+export class BlogComponent implements OnInit, AfterViewInit {
 
   public entry: BlogEntry;
   public description: string;
@@ -27,7 +30,9 @@ export class BlogComponent implements OnInit {
     private actRoute: ActivatedRoute,
     private route: Router,
     private utils: UtilsService,
-    private title: Title) {
+    private title: Title,
+    private seo: SeoService,
+    @Inject(PLATFORM_ID) private platformId: Object) {
 
     // override the route reuse strategy
     this.route.routeReuseStrategy.shouldReuseRoute = function () {
@@ -36,7 +41,15 @@ export class BlogComponent implements OnInit {
   }
 
   ngOnInit() {
+    if (!isPlatformBrowser(this.platformId)) { return; }
+
     this.useDatabase();
+  }
+
+  ngAfterViewInit() {
+    if (this.description) {
+      this.title.setTitle(this.description);
+    }
   }
 
   useFileSystem() {
@@ -45,8 +58,6 @@ export class BlogComponent implements OnInit {
 
     this.description = filetitle.replace(/-/g, ' ');
     this.description = this.utils.ToPascalCase(this.description);
-
-    this.title.setTitle(this.description);
 
     this.http.get(filepath, { responseType: 'text' as 'json' }).subscribe(data => {
       this.content = data.toString();
@@ -75,6 +86,32 @@ export class BlogComponent implements OnInit {
         this.redirect();
       }
       this.title.setTitle(this.entry.title);
+      
+      let description = this.entry.content ? this.entry.content.replace(/<[^>]*>/g, '').substring(0, 155) : this.entry.title;
+      this.seo.updateMetaTags({
+        title: this.entry.title,
+        description: description,
+        url: `https://maximum-pain.com/blog/archive/${dash}`
+      });
+      
+      this.seo.addStructuredData({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": this.entry.title,
+        "description": description,
+        "author": {
+          "@type": "Organization",
+          "name": "Maximum Pain"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Maximum Pain",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://maximum-pain.com/assets/maxpain.png"
+          }
+        }
+      });
     });
   }
 

@@ -2,16 +2,16 @@
 {
     public class ScwStockQuote
     {
-        public string assetMainType { get; set; }
-        public string assetSubType { get; set; }
-        public string quoteType { get; set; }
+        public string? assetMainType { get; set; }
+        public string? assetSubType { get; set; }
+        public string? quoteType { get; set; }
         public bool realtime { get; set; }
         public int ssid { get; set; }
-        public string symbol { get; set; }
-        public ScwFundamental fundamental { get; set; }
-        public ScwQuote quote { get; set; }
-        public ScwReference reference { get; set; }
-        public ScwRegular regular { get; set; }
+        public string? symbol { get; set; }
+        public ScwFundamental? fundamental { get; set; }
+        public ScwQuote? quote { get; set; }
+        public ScwReference? reference { get; set; }
+        public ScwRegular? regular { get; set; }
     }
 
     public class ScwFundamental
@@ -37,17 +37,17 @@
     {
         public float _52WeekHigh { get; set; }
         public float _52WeekLow { get; set; }
-        public string askMICId { get; set; }
+        public string? askMICId { get; set; }
         public float askPrice { get; set; }
         public int askSize { get; set; }
         public long askTime { get; set; }
-        public string bidMICId { get; set; }
+        public string? bidMICId { get; set; }
         public float bidPrice { get; set; }
         public int bidSize { get; set; }
         public long bidTime { get; set; }
         public float closePrice { get; set; }
         public float highPrice { get; set; }
-        public string lastMICId { get; set; }
+        public string? lastMICId { get; set; }
         public float lastPrice { get; set; }
         public int lastSize { get; set; }
         public float lowPrice { get; set; }
@@ -60,17 +60,17 @@
         public float postMarketChange { get; set; }
         public float postMarketPercentChange { get; set; }
         public long quoteTime { get; set; }
-        public string securityStatus { get; set; }
+        public string? securityStatus { get; set; }
         public int totalVolume { get; set; }
         public long tradeTime { get; set; }
     }
 
     public class ScwReference
     {
-        public string cusip { get; set; }
-        public string description { get; set; }
-        public string exchange { get; set; }
-        public string exchangeName { get; set; }
+        public string? cusip { get; set; }
+        public string? description { get; set; }
+        public string? exchange { get; set; }
+        public string? exchangeName { get; set; }
         public bool isHardToBorrow { get; set; }
         public bool isShortable { get; set; }
         public int htbQuantity { get; set; }

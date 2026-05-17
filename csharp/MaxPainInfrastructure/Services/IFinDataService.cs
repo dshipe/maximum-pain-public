@@ -16,7 +16,7 @@ namespace MaxPainInfrastructure.Services
         #region Generic
         public Task<bool> IsMarketOpen(DateTime dt);
 
-        public Task<OptChn> FetchOptions(string ticker);
+        public Task<OptChn> FetchOptions(string ticker, bool useCachedToken = false);
 
         public Task<List<Stock>> FetchStock(string tickers);
 
@@ -25,8 +25,10 @@ namespace MaxPainInfrastructure.Services
         public Task<List<ScwOptionCSV>> FetchOptionCSV(string ticker);
         #endregion
 
-        public Task<List<SchwabAccount>> Schwab_Account();
+        public Task<List<SchwabAccount>> Schwab_Account(bool useCachedToken = false);
 
-        public Task<string> Schwab_Watchlist();
+        public Task<string> Schwab_Watchlist(bool useCachedToken = false);
+
+        public Task<ScwToken> Schwab_Init(bool useCachedToken, bool force = false);
     }
 }

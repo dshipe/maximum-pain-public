@@ -4,8 +4,8 @@ namespace MaxPainInfrastructure.Services
 {
     public interface IHistoryService
     {
-        List<OptChn> BuildChnList(List<HistoricalOptionQuoteXML> historyXmls);
-        List<Opt> BuildOptList(List<HistoricalOptionQuoteXML> historyXmls);
+        List<OptChn> BuildChnList(List<HistoricalOptionQuote> histories);
+        List<Opt> BuildOptList(List<HistoricalOptionQuote> histories);
         Task<List<OptChn>> ChainGetByDate(DateTime utc);
         Task<List<OptChn>> ChainGetByDateAndTicker(DateTime utc, string ticker);
         Task<List<OptChn>> ChainGetByTicker(string ticker, DateTime createdOn, int days);
